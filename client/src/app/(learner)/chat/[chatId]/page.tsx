@@ -74,14 +74,15 @@ interface SessionDetails {
 
 export default function ChatRoomPage() {
   const params = useParams();
-  const ticketId = params?.id as string;
+  const ticketId = (params?.chatId ?? params?.id) as string;
 
   // State
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageInput, setMessageInput] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [sessionDetails, setSessionDetails] = useState<SessionDetails | null>(null);
-  
+  const [questionIdForWs, setQuestionIdForWs] = useState<string | null>(null);
+
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -95,44 +96,59 @@ export default function ChatRoomPage() {
 
   // ----------------------------------------------------------------------
   // FETCH SESSION DETAILS FROM DJANGO
+  // ticketId can be session_id (from conversation list) or question_id (from create redirect)
   // ----------------------------------------------------------------------
   useEffect(() => {
     if (!ticketId || ticketId === 'undefined') return;
 
     const fetchSession = async () => {
       try {
-        // Ensure you have an endpoint in Django to get question details
-        const res = await api.get(`/questions/${ticketId}/`);
+        // Try chat session API first (when navigating from conversation list - session_id)
+        const sessionRes = await api.get(`/chat/sessions/${ticketId}/`);
+        const data = sessionRes.data;
         setSessionDetails({
-          title: res.data.title,
-          description: res.data.description,
-          // Extract tag names if backend returns an array of objects
-          tags: res.data.tags?.map((t: any) => typeof t === 'string' ? t : t.name) ||[]
+          title: data.title,
+          description: data.description,
+          tags: Array.isArray(data.tags) ? data.tags : [],
         });
-      } catch (error) {
-        console.error("Failed to fetch session details:", error);
-        setSessionDetails({
-          title: 'Session Not Found',
-          description: 'Could not load details for this session.',
-          tags: []
-        });
+        setQuestionIdForWs(String(data.question_id));
+      } catch {
+        try {
+          // Fallback: question detail API (when coming from create - question_id)
+          const res = await api.get(`/questions/${ticketId}/`);
+          setSessionDetails({
+            title: res.data.title,
+            description: res.data.description,
+            tags: res.data.tags?.map((t: any) => typeof t === 'string' ? t : t.name) || [],
+          });
+          setQuestionIdForWs(ticketId);
+        } catch (err) {
+          console.error("Failed to fetch session details:", err);
+          setSessionDetails({
+            title: 'Session Not Found',
+            description: 'Could not load details for this session.',
+            tags: [],
+          });
+          setQuestionIdForWs(null);
+        }
       }
     };
 
     fetchSession();
-  },[ticketId]);
+  }, [ticketId]);
 
   // ----------------------------------------------------------------------
-  // WEBSOCKET CONNECTION
+  // WEBSOCKET CONNECTION (requires question_id - backend looks up session by question)
   // ----------------------------------------------------------------------
   useEffect(() => {
-    if (!ticketId || ticketId === 'undefined') return;
+    const qId = questionIdForWs;
+    if (!qId) return;
 
-    const wsUrl = `ws://127.0.0.1:8000/ws/chat/${ticketId}/`;
+    const wsUrl = `ws://127.0.0.1:8000/ws/chat/${qId}/`;
     wsRef.current = new WebSocket(wsUrl);
 
     wsRef.current.onopen = () => {
-      console.log("🟢 Connected to Live War Room:", ticketId);
+      console.log("🟢 Connected to Live War Room:", qId);
       setIsConnected(true);
     };
 
@@ -165,7 +181,7 @@ export default function ChatRoomPage() {
     return () => {
       wsRef.current?.close();
     };
-  }, [ticketId, currentUserId]);
+  }, [questionIdForWs, currentUserId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -207,7 +223,7 @@ export default function ChatRoomPage() {
   // ----------------------------------------------------------------------
   if (!ticketId || ticketId === 'undefined') {
     return (
-      <div className="flex flex-col h-[calc(100vh-50px)] items-center justify-center bg-gray-50/50 mt-2 mx-4 rounded-lg border border-dashed border-gray-300">
+      <div className="flex flex-1 flex-col items-center justify-center overflow-hidden rounded-lg border border-dashed border-gray-300 bg-gray-50/50 mx-4 mt-2">
         <div className="w-16 h-16 bg-white border border-gray-100 rounded-full flex items-center justify-center mb-4 shadow-sm">
           <MessageSquare className="w-8 h-8 text-gray-400" />
         </div>
@@ -221,14 +237,13 @@ export default function ChatRoomPage() {
   // RENDER UI
   // ----------------------------------------------------------------------
   return (
-    <div className="flex rounded-lg border border-border bg-background mt-2 mx-4 shadow-sm flex-col h-[calc(100vh-50px)]">
+    <div className="flex min-w-0 flex-1 flex-col rounded-lg border border-border bg-background mt-2 mx-4 shadow-sm h-[calc(100vh-50px)]">
       
-      <div className="px-4 py-3 border-b border-border bg-card shrink-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <h2 className="font-medium text-lg text-foreground">
+      <div className="min-w-0 shrink-0 border-b border-border bg-card px-4 py-3">
+        <div className="flex min-w-0 items-center justify-between gap-3">
+          <div className="min-w-0 flex-1 space-y-1">
+              <div className="flex min-w-0 items-center gap-2">
+                <h2 className="min-w-0 truncate font-medium text-lg text-foreground">
                   {sessionDetails?.title || `Loading Session #${ticketId}...`}
                 </h2>
                 <span className={cn("w-2 h-2 rounded-full animate-pulse", isConnected ? "bg-green-500" : "bg-red-500")} />
@@ -240,26 +255,25 @@ export default function ChatRoomPage() {
                   </span>
                 ))}
               </div>
-            </div>
           </div>
-          <Button variant="ghost" size="icon" className="hover:bg-muted">
+          <Button variant="ghost" size="icon" className="hover:bg-muted shrink-0">
             <MoreVertical className="h-5 w-5 text-foreground" />
           </Button>
         </div>
       </div>
 
-      <ScrollArea className="flex-1 bg-muted/20">
+      <ScrollArea className="min-h-0 flex-1 bg-muted/20">
         <div className="p-4 space-y-6">
           
           {sessionDetails && (
-            <div className="bg-card border border-border rounded-lg p-4 shadow-sm">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-[#03624c] flex items-center justify-center flex-shrink-0">
+            <div className="min-w-0 rounded-lg border border-border bg-card p-4 shadow-sm">
+              <div className="flex min-w-0 items-start gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#03624c]">
                   <BookOpen className="h-4 w-4 text-white" />
                 </div>
-                <div>
-                  <h4 className="font-medium text-foreground mb-1">Problem Description</h4>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                <div className="min-w-0 flex-1">
+                  <h4 className="mb-1 font-medium text-foreground">Problem Description</h4>
+                  <p className="break-words text-sm text-muted-foreground leading-relaxed">
                     {sessionDetails.description}
                   </p>
                 </div>

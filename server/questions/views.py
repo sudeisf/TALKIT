@@ -160,6 +160,26 @@ class CreateQuestionView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
 
+class QuestionDetailView(APIView):
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, question_id):
+        question = get_object_or_404(Question, id=question_id)
+        has_access = (
+            question.asked_by_id == request.user.id
+            or ChatSession.objects.filter(question=question, participants=request.user).exists()
+        )
+        if not has_access:
+            return Response({"error": "You do not have access to this question."}, status=403)
+        return Response({
+            "id": question.id,
+            "title": question.title,
+            "description": question.description,
+            "tags": list(question.tags.values_list("name", flat=True)),
+        })
+
+
 class MyQuestionsListView(generics.ListAPIView):
 	serializer_class = MyQuestionListSerializer
 	permission_classes = [permissions.IsAuthenticated]

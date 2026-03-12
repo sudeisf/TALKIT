@@ -21,17 +21,8 @@ const tabs: Array<{ key: ChatTabKey; title: string; icon: typeof BookOpen }> = [
 export default function ChatTabs({ activeTab, counts, onTabChange }: ChatTabsProps) {
   return (
     <div
-      className="flex overflow-x-auto items-center gap-4 border-b px-2"
-      style={{
-        scrollbarWidth: 'none',
-        msOverflowStyle: 'none',
-      }}
+      className="flex min-w-0 shrink-0 overflow-x-auto overflow-y-hidden border-b px-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
     >
-      <style jsx>{`
-        div::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
       {tabs.map((tab, index) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.key;
@@ -42,7 +33,7 @@ export default function ChatTabs({ activeTab, counts, onTabChange }: ChatTabsPro
             key={`tab-${index}`}
             variant="ghost"
             onClick={() => onTabChange(tab.key)}
-            className={`relative flex items-center gap-2 rounded-none border-b-2 px-4 py-3 text-sm font-medium transition-colors
+            className={`relative flex shrink-0 items-center gap-2 whitespace-nowrap rounded-none border-b-2 px-4 py-3 text-sm font-medium transition-colors
               ${
                 isActive
                   ? 'border-primary text-primary'

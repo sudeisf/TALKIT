@@ -23,7 +23,10 @@ export const useCreateQuestionMutation = () => {
     mutationKey: ['create-question'],
     mutationFn: (payload: CreateQuestionPayload) => createQuestion(payload),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['my-questions'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['my-questions'] }),
+        queryClient.invalidateQueries({ queryKey: ['chat-sessions'] }),
+      ]);
     },
   });
 };

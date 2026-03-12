@@ -12,9 +12,9 @@ export default function LearnerLayout({
     <NotificationProvider>
       <SidebarProvider>
         <AppSidebar />
-        <main className="w-full">
+        <main className="flex h-dvh w-full flex-col overflow-hidden">
           <AppNavbar />
-          {children}
+          <div className="min-h-0 flex-1 overflow-auto">{children}</div>
         </main>
       </SidebarProvider>
     </NotificationProvider>

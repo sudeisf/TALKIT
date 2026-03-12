@@ -6,9 +6,9 @@ export default function ChatLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="flex bg-background ">
+    <div className="flex h-full w-full overflow-hidden bg-background">
       <ChatList />
-      <div className="flex flex-col  w-full">{children}</div>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{children}</div>
     </div>
   );
 }
