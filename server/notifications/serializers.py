@@ -4,6 +4,8 @@ from .models import Notification
 
 
 class NotificationSerializer(serializers.ModelSerializer):
+    question_id = serializers.IntegerField(read_only=True, allow_null=True)
+
     class Meta:
         model = Notification
         fields = [
@@ -13,4 +15,5 @@ class NotificationSerializer(serializers.ModelSerializer):
             'message',
             'is_read',
             'created_at',
+            'question_id',
         ]

@@ -7,6 +7,7 @@ export interface NotificationApiItem {
   message: string;
   is_read: boolean;
   created_at: string;
+  question_id?: number | null;
 }
 
 export const getNotifications = async () => {

@@ -56,6 +56,7 @@ export default function NotificationsPage() {
     markAllAsRead,
     deleteNotification,
     clearAllRead,
+    handleAcceptInvite,
   } = useNotifications();
   const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all');
 
@@ -202,6 +203,18 @@ export default function NotificationsPage() {
                         </div>
 
                         <div className="flex items-center gap-1 ml-4">
+                          {notification.type === 'study' &&
+                            notification.questionId != null && (
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  handleAcceptInvite(notification.questionId!);
+                                }}
+                                className="bg-[#03624c] text-white hover:bg-[#024a3a]"
+                              >
+                                Accept
+                              </Button>
+                            )}
                           {!notification.isRead && (
                             <Button
                               variant="ghost"

@@ -11,14 +11,21 @@ class ChatSessionListView(APIView):
 
     def get(self, request):
         search_query = (request.query_params.get('q') or '').strip()
+        user_role = getattr(request.user, 'role', None)
+
+        # Private sessions: filter by role
+        if user_role == 'learner':
+            base_filter = Q(question__asked_by=request.user)
+        elif user_role == 'helper':
+            base_filter = Q(participants=request.user)
+        else:
+            # Fallback for users without role
+            base_filter = Q(participants=request.user) | Q(question__asked_by=request.user)
 
         sessions = (
             ChatSession.objects.select_related('question')
             .prefetch_related('question__tags', 'messages')
-            .filter(
-                Q(participants=request.user)
-                | Q(question__asked_by=request.user)
-            )
+            .filter(base_filter)
             .annotate(participant_count=Count('participants', distinct=True))
             .order_by('-updated_at')
             .distinct()

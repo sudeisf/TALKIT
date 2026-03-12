@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import {
   clearReadNotifications,
@@ -10,6 +11,7 @@ import {
   markNotificationRead,
   NotificationApiItem,
 } from '@/lib/api/notificationsApi';
+import { joinQuestion } from '@/lib/api/questionApi';
 
 export interface Notification {
   id: string;
@@ -19,6 +21,7 @@ export interface Notification {
   timestamp: string;
   isRead: boolean;
   priority: 'low' | 'medium' | 'high';
+  questionId?: number | null;
 }
 
 interface NotificationContextType {
@@ -31,6 +34,7 @@ interface NotificationContextType {
   markAllAsRead: () => void;
   deleteNotification: (id: string) => void;
   clearAllRead: () => void;
+  handleAcceptInvite: (questionId: number) => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(
@@ -97,6 +101,7 @@ const mapApiNotification = (item: NotificationApiItem): Notification => ({
   timestamp: toRelativeTime(item.created_at),
   isRead: item.is_read,
   priority: mapPriority(item.notification_type),
+  questionId: item.question_id ?? null,
 });
 
 const mapSocketNotification = (raw: {
@@ -106,6 +111,7 @@ const mapSocketNotification = (raw: {
   message: string;
   is_read: boolean;
   created_at: string;
+  question_id?: string | number | null;
 }): Notification => ({
   id: String(raw.id),
   type: mapNotificationType(raw.notification_type),
@@ -114,6 +120,7 @@ const mapSocketNotification = (raw: {
   timestamp: toRelativeTime(raw.created_at),
   isRead: raw.is_read,
   priority: mapPriority(raw.notification_type),
+  questionId: raw.question_id != null ? Number(raw.question_id) : null,
 });
 
 const getNotificationWebSocketUrl = () => {
@@ -127,11 +134,15 @@ const getNotificationWebSocketUrl = () => {
   }
 };
 
+const isInviteNotification = (type: string, questionId?: number | null) =>
+  type === 'question_announcement' && questionId != null;
+
 export function NotificationProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [notificationIdCounter, setNotificationIdCounter] = useState(1000);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -188,8 +199,30 @@ export function NotificationProvider({
               const deduped = prev.filter((item) => item.id !== incoming.id);
               return [incoming, ...deduped];
             });
+            const isInvite = isInviteNotification(
+              socketData.notification_type,
+              incoming.questionId
+            );
             toast.success(incoming.title, {
               description: incoming.message,
+              action: isInvite
+                ? {
+                    label: 'Accept',
+                    onClick: () => {
+                      if (incoming.questionId == null) return;
+                      joinQuestion(incoming.questionId)
+                        .then((res) => {
+                          const sessionId = (res as { session_id?: number }).session_id;
+                          if (sessionId != null) {
+                            router.push(`/sessions/${sessionId}`);
+                          }
+                        })
+                        .catch(() => {
+                          toast.error('Could not join the session.');
+                        });
+                    },
+                  }
+                : undefined,
             });
             return;
           }
@@ -215,7 +248,7 @@ export function NotificationProvider({
       }
       websocket?.close();
     };
-  }, [loadNotifications]);
+  }, [loadNotifications, router]);
 
   const addNotification = (
     notification: Omit<Notification, 'id' | 'timestamp'>
@@ -277,6 +310,17 @@ export function NotificationProvider({
     });
   };
 
+  const handleAcceptInvite = useCallback(
+    async (questionId: number) => {
+      const res = await joinQuestion(questionId);
+      const sessionId = (res as { session_id?: number }).session_id;
+      if (sessionId != null) {
+        router.push(`/sessions/${sessionId}`);
+      }
+    },
+    [router]
+  );
+
   return (
     <NotificationContext.Provider
       value={{
@@ -287,6 +331,7 @@ export function NotificationProvider({
         markAllAsRead,
         deleteNotification,
         clearAllRead,
+        handleAcceptInvite,
       }}
     >
       {children}
