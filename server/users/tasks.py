@@ -4,15 +4,10 @@ from .models import User
 
 
 def _extract_embedding_vector(result):
-    """
-    Normalize Gemini embedding response into a Python list.
-    Handles multiple response formats.
-    """
-
+  
     if not result:
         return None
 
-    # New SDK response structure
     embeddings = getattr(result, "embeddings", None)
     if embeddings:
         first = embeddings[0]
@@ -20,14 +15,12 @@ def _extract_embedding_vector(result):
         if values:
             return list(values)
 
-    # Alternative structure
     single_embedding = getattr(result, "embedding", None)
     if single_embedding:
         values = getattr(single_embedding, "values", None)
         if values:
             return list(values)
 
-    # Dict fallback
     if isinstance(result, dict):
         if isinstance(result.get("embedding"), list):
             return result["embedding"]
@@ -48,7 +41,6 @@ def update_user_embedding(self, user_id):
     if not getattr(settings, "GOOGLE_API_KEY", None):
         return
 
-    # Lazy import prevents Django startup failures
     from google import genai
 
     client = genai.Client(api_key=settings.GOOGLE_API_KEY)

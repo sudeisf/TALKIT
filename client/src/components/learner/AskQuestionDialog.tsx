@@ -32,6 +32,8 @@ import {
 import { toast } from 'sonner';
 import { parseDjangoError } from '@/lib/utils';
 import { WandSparkles } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+
 
 const questionFormSchema = z.object({
   title: z
@@ -57,6 +59,7 @@ export default function AskQuestion({ btnChild }: ASkQuestionProps) {
   const [open, setOpen] = useState(false);
   const createQuestionMutation = useCreateQuestionMutation();
   const modifyDescriptionMutation = useModifyQuestionDescriptionMutation();
+  const router = useRouter()
   const form = useForm<QuestionFormData>({
     resolver: zodResolver(questionFormSchema),
     defaultValues: {
@@ -70,10 +73,15 @@ export default function AskQuestion({ btnChild }: ASkQuestionProps) {
     form.clearErrors();
 
     try {
-      await createQuestionMutation.mutateAsync(data);
+      const response = await createQuestionMutation.mutateAsync(data);
       toast.success('Question submitted successfully');
       setOpen(false);
       form.reset();
+
+       if (response && response.id) {
+         router.push(`/chat/${response.id}`);
+      }
+
     } catch (error) {
       const parsedError = parseDjangoError(error);
 
