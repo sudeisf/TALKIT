@@ -4,15 +4,15 @@ import { useParams } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Loader2, MessageSquare, Mic, MoreVertical, Pause, Play, Smile, Users } from 'lucide-react';
+import { BookOpen, MessageSquare, MoreVertical, Pause, Play, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import hljs from 'highlight.js/lib/core';
 import api from '@/lib/api/axiosInstance'
-import EmojiPicker from 'emoji-picker-react';
+import { MessageInput, type OutgoingChatMessage } from '@/components/helper/inputBox';
 
 // ----------------------------------------------------------------------
 // HELPER FUNCTIONS 
@@ -36,22 +36,6 @@ const detectLanguage = (code?: string) => {
   }
 };
 
-const parseMarkdownCodeBlock = (input?: string) => {
-  if (!input) return null;
-  const match = input.match(/```([\w+-]*)\n([\s\S]*?)```/);
-  if (!match) return null;
-  const [, lang, code] = match;
-  return { language: lang?.trim() || undefined, code: code?.trimEnd() || '' };
-};
-
-const looksLikeCode = (input?: string) => {
-  if (!input) return false;
-  const text = input.trim();
-  if (!text) return false;
-  const hasMultipleLines = text.split('\n').length >= 3;
-  const hasCodeSignals = /(from\s+\w+\s+import|import\s+\w+|def\s+\w+\(|class\s+\w+|const\s+\w+|let\s+\w+|function\s+\w+\(|=>|re_path\(|\{|\}|\[|\]|;)/m.test(text);
-  return hasMultipleLines && hasCodeSignals;
-};
 
 const getChatWebSocketUrl = (questionId: string) => {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -141,7 +125,6 @@ export default function ChatRoomPage() {
 
   // State
   const [messages, setMessages] = useState<Message[]>([]);
-  const [messageInput, setMessageInput] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [sessionDetails, setSessionDetails] = useState<SessionDetails | null>(null);
   const [questionIdForWs, setQuestionIdForWs] = useState<string | null>(null);
@@ -162,10 +145,6 @@ export default function ChatRoomPage() {
     profile_image_url?: string | null;
   }>>([]);
   const [onlineUserIds, setOnlineUserIds] = useState<number[]>([]);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -338,75 +317,27 @@ export default function ChatRoomPage() {
   // ----------------------------------------------------------------------
   // SEND MESSAGE HANDLER
   // ----------------------------------------------------------------------
-  const sendCurrentMessage = () => {
-    if (!messageInput.trim() || !wsRef.current) return;
-
-    const rawMessage = messageInput;
-    const parsedFence = parseMarkdownCodeBlock(rawMessage);
-    const isAutoCode = looksLikeCode(rawMessage);
-    const finalCode = parsedFence?.code || (isAutoCode ? rawMessage : "");
-    const isCode = !!finalCode;
-
-    const payload = {
-      type: "message",
-      message: isCode ? "Code snippet" : rawMessage,
-      message_type: isCode ? "code" : "text",
-      code_snippet: finalCode,
-      code_language: parsedFence?.language || detectLanguage(finalCode)
-    };
-
+  const handleSendMessage = (payload: OutgoingChatMessage) => {
+    if (!wsRef.current || !isConnected) return;
+    if (!payload.message.trim() && !payload.code_snippet?.trim()) return;
     wsRef.current.send(JSON.stringify(payload));
-    setMessageInput('');
   };
 
-  const startRecording = async () => {
-    if (isRecording) return;
+  const handleVoiceMessage = async (audioBlob: Blob) => {
+    if (!wsRef.current || !isConnected) return;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      audioChunksRef.current = [];
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-      recorder.onstop = async () => {
-        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        stream.getTracks().forEach((track) => track.stop());
-        try {
-          const audioBase64 = await blobToBase64(blob);
-          wsRef.current?.send(
-            JSON.stringify({
-              type: 'message',
-              message: '',
-              message_type: 'voice',
-              audio_base64: audioBase64,
-              file_name: `voice-${Date.now()}.webm`,
-            })
-          );
-        } catch (error) {
-          console.error('Failed to send voice message:', error);
-        }
-      };
-      mediaRecorderRef.current = recorder;
-      recorder.start();
-      setIsRecording(true);
+      const audioBase64 = await blobToBase64(audioBlob);
+      wsRef.current.send(
+        JSON.stringify({
+          type: 'message',
+          message: '',
+          message_type: 'voice',
+          audio_base64: audioBase64,
+          file_name: `voice-${Date.now()}.webm`,
+        })
+      );
     } catch (error) {
-      console.error('Failed to start recording:', error);
-    }
-  };
-
-  const stopRecording = () => {
-    if (!mediaRecorderRef.current) return;
-    mediaRecorderRef.current.stop();
-    mediaRecorderRef.current = null;
-    setIsRecording(false);
-  };
-
-  const handleComposerKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendCurrentMessage();
+      console.error('Failed to send voice message:', error);
     }
   };
 
@@ -625,61 +556,8 @@ export default function ChatRoomPage() {
         </div>
       </ScrollArea>
 
-      <div className="p-4 bg-card border-t border-border shrink-0">
-        <div className="flex items-end gap-3 bg-muted/50 rounded-xl border border-border p-2 focus-within:ring-1 focus-within:ring-[#03624c] transition-all">
-          <textarea
-            value={messageInput}
-            onChange={(e) => setMessageInput(e.target.value)}
-            onKeyDown={handleComposerKeyDown}
-            placeholder="Type a message or paste code..."
-            rows={1}
-            className="w-full max-h-32 min-h-[40px] resize-none overflow-y-auto bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground"
-          />
-          <div className="relative flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setShowEmojiPicker((prev) => !prev)}
-              className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted"
-              aria-label="Add emoji"
-            >
-              <Smile className="h-5 w-5 text-muted-foreground" />
-            </button>
-            {showEmojiPicker && (
-              <div className="absolute bottom-12 right-0 z-50">
-                <EmojiPicker
-                  onEmojiClick={(emoji) => {
-                    setMessageInput((prev) => `${prev}${emoji.emoji}`);
-                  }}
-                />
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={() => (isRecording ? stopRecording() : startRecording())}
-              className={cn(
-                'flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted',
-                isRecording && 'text-red-500'
-              )}
-              aria-label={isRecording ? 'Stop recording' : 'Record voice message'}
-            >
-              {isRecording ? (
-                <Pause className="h-5 w-5" />
-              ) : (
-                <Mic className="h-5 w-5 text-muted-foreground" />
-              )}
-            </button>
-          </div>
-          <Button
-            onClick={sendCurrentMessage}
-            disabled={!messageInput.trim() || !isConnected}
-            className="rounded-lg bg-[#03624c] hover:bg-[#024a3a] text-white shrink-0 mb-0.5"
-          >
-            {isConnected ? 'Send' : <Loader2 className="w-4 h-4 animate-spin" />}
-          </Button>
-        </div>
-        <p className="text-[10px] text-muted-foreground mt-2 text-center">
-          Pro tip: Paste code blocks or use Markdown <code>```python</code> to automatically format code.
-        </p>
+      <div className="border-t border-border shrink-0">
+        <MessageInput onVoiceMessage={handleVoiceMessage} onSendMessage={handleSendMessage} />
       </div>
     </div>
   );

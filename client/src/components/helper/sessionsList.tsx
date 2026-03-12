@@ -87,12 +87,20 @@ export default function SessionsList() {
     } as Record<SessionTabKey, number>;
   }, [sessions, favoriteSessionIds]);
 
+  const sortedSessions = useMemo(() => {
+    return [...sessions].sort((a, b) => {
+      const aTime = new Date(a.last_message_at || a.updated_at || 0).getTime();
+      const bTime = new Date(b.last_message_at || b.updated_at || 0).getTime();
+      return bTime - aTime;
+    });
+  }, [sessions]);
+
   const visibleSessions = useMemo(() => {
-    if (activeTab === 'all') return sessions;
-    if (activeTab === 'active') return sessions.filter((session) => !isArchivedSession(session));
-    if (activeTab === 'archived') return sessions.filter(isArchivedSession);
-    return sessions.filter((session) => favoriteSessionIds.includes(session.session_id));
-  }, [activeTab, sessions, favoriteSessionIds]);
+    if (activeTab === 'all') return sortedSessions;
+    if (activeTab === 'active') return sortedSessions.filter((session) => !isArchivedSession(session));
+    if (activeTab === 'archived') return sortedSessions.filter(isArchivedSession);
+    return sortedSessions.filter((session) => favoriteSessionIds.includes(session.session_id));
+  }, [activeTab, sortedSessions, favoriteSessionIds]);
 
   const searchedSessions = useMemo(() => {
     const normalized = searchValue.trim().toLowerCase();

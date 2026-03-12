@@ -613,14 +613,14 @@ function VoiceMessageBubble({
   ];
 
   return (
-    <div className="flex items-end gap-2 max-w-md w-full">
+    <div className="flex items-center gap-3 rounded-full border bg-none p-2 shadow-none w-[260px]">
       {/* small gray mic circle */}
-      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center mr-1">
+      <div className="hidden">
         <Mic className="w-4 h-4 text-muted-foreground" />
       </div>
 
       {/* main pill */}
-      <div className="flex items-center w-[280px] bg-card rounded-full shadow-xs border border-border px-4 py-3">
+      <div className="flex items-center w-[280px] bg-none rounded-sm shadow-none">
         {/* play button */}
         <button
           onClick={togglePlayback}
@@ -628,14 +628,23 @@ function VoiceMessageBubble({
           aria-label={isPlaying ? 'Pause voice message' : 'Play voice message'}
         >
           {isPlaying ? (
-            <Square className="w-3.5 h-3.5 fill-current" />
+            <Square className="w-4 h-4 fill-current" />
           ) : (
-            <Play className="w-3.5 h-3.5 fill-current ml-[1px]" />
+            <Play className="w-4 h-4 fill-current ml-0.5" />
           )}
         </button>
 
+        <div className="flex-1">
+          <div className="h-1 w-full rounded-full bg-muted">
+            <div
+              className="h-1 rounded-full bg-black dark:bg-white"
+              style={{ width: `${Math.min(progress * 100, 100)}%` }}
+            />
+          </div>
+        </div>
+
         {/* full-width line visualizer */}
-        <div className="flex-1 h-7 flex items-center">
+        <div className="hidden">
           <div className="w-full h-full flex items-center justify-between">
             {barPattern.map((v, idx) => {
               const played = idx / barPattern.length < progress;
