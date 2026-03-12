@@ -4,13 +4,15 @@ import { useParams } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { BookOpen, MoreVertical, Loader2, MessageSquare } from 'lucide-react';
+import { BookOpen, Loader2, MessageSquare, Mic, MoreVertical, Pause, Play, Smile, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import hljs from 'highlight.js/lib/core';
 import api from '@/lib/api/axiosInstance'
+import EmojiPicker from 'emoji-picker-react';
 
 // ----------------------------------------------------------------------
 // HELPER FUNCTIONS 
@@ -51,6 +53,66 @@ const looksLikeCode = (input?: string) => {
   return hasMultipleLines && hasCodeSignals;
 };
 
+const getChatWebSocketUrl = (questionId: string) => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  try {
+    const parsed = new URL(apiUrl);
+    const wsProtocol = parsed.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${wsProtocol}//${parsed.host}/ws/chat/${encodeURIComponent(questionId)}/`;
+  } catch {
+    return `ws://localhost:8000/ws/chat/${encodeURIComponent(questionId)}/`;
+  }
+};
+
+const renderLinkedText = (text: string) => {
+  const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
+  const parts = text.split(urlRegex);
+  return parts.map((part, index) => {
+    if (!part) return null;
+    if (/^(https?:\/\/|www\.)/i.test(part)) {
+      const href = part.startsWith('http') ? part : `https://${part}`;
+      return (
+        <a
+          key={`link-${index}`}
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          className="text-[#03624c] underline underline-offset-2"
+        >
+          {part}
+        </a>
+      );
+    }
+    return <span key={`text-${index}`}>{part}</span>;
+  });
+};
+
+const blobToBase64 = (blob: Blob) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+      } else {
+        reject(new Error('Failed to read audio data.'));
+      }
+    };
+    reader.onerror = () => reject(new Error('Failed to read audio data.'));
+    reader.readAsDataURL(blob);
+  });
+
+const normalizeFileUrl = (url?: string | null) => {
+  if (!url) return undefined;
+  if (/^https?:\/\//i.test(url)) return url;
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  try {
+    const parsed = new URL(apiUrl);
+    return `${parsed.origin}${url.startsWith('/') ? url : `/${url}`}`;
+  } catch {
+    return url;
+  }
+};
+
 // ----------------------------------------------------------------------
 // TYPES
 // ----------------------------------------------------------------------
@@ -61,6 +123,7 @@ interface Message {
   sender: 'user' | 'other';
   timestamp: Date;
   name: string;
+  avatarUrl?: string | null;
   audioUrl?: string;
   codeSnippet?: string;
   codeLanguage?: string;
@@ -82,17 +145,42 @@ export default function ChatRoomPage() {
   const [isConnected, setIsConnected] = useState(false);
   const [sessionDetails, setSessionDetails] = useState<SessionDetails | null>(null);
   const [questionIdForWs, setQuestionIdForWs] = useState<string | null>(null);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [owner, setOwner] = useState<{
+    id: number | null;
+    username: string | null;
+    first_name: string | null;
+    last_name: string | null;
+    profile_image_url?: string | null;
+  } | null>(null);
+  const [participants, setParticipants] = useState<Array<{
+    id: number;
+    username: string;
+    first_name: string;
+    last_name: string;
+    profile_image_url?: string | null;
+  }>>([]);
+  const [onlineUserIds, setOnlineUserIds] = useState<number[]>([]);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
-  // ⚠️ TODO: Replace this with your actual logged in User ID from context/Zustand
-  const currentUserId = 1; 
-
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
   };
+
+  const onlineParticipants = participants.filter((participant) =>
+    onlineUserIds.includes(participant.id)
+  );
+  const offlineParticipants = participants.filter(
+    (participant) => !onlineUserIds.includes(participant.id)
+  );
 
   // ----------------------------------------------------------------------
   // FETCH SESSION DETAILS FROM DJANGO
@@ -111,7 +199,35 @@ export default function ChatRoomPage() {
           description: data.description,
           tags: Array.isArray(data.tags) ? data.tags : [],
         });
+        setOwner(data.asked_by || null);
+        setParticipants(Array.isArray(data.participants) ? data.participants : []);
+        setCurrentUserId(typeof data.current_user_id === 'number' ? data.current_user_id : null);
+        if (Array.isArray(data.messages)) {
+          const mappedMessages: Message[] = data.messages.map((message: any) => {
+            const firstName = message.sender?.first_name || '';
+            const lastName = message.sender?.last_name || '';
+            const fallbackName = message.sender?.username || 'User';
+            const resolvedName = `${firstName} ${lastName}`.trim() || fallbackName;
+            const isCode = message.message_type === 'code';
+            const isVoice = message.message_type === 'audio' || message.message_type === 'voice';
+
+            return {
+              id: String(message.id),
+              text: isCode ? 'Code snippet' : message.message_content,
+              type: isCode ? 'code' : isVoice ? 'voice' : 'text',
+              sender: message.is_mine ? 'user' : 'other',
+              timestamp: new Date(message.created_at),
+              name: resolvedName,
+              avatarUrl: message.sender?.profile_image_url || undefined,
+              codeSnippet: message.code_snippet || undefined,
+              codeLanguage: isCode ? detectLanguage(message.code_snippet) : undefined,
+              audioUrl: normalizeFileUrl(isVoice ? message.file_url || undefined : undefined),
+            };
+          });
+          setMessages(mappedMessages);
+        }
         setQuestionIdForWs(String(data.question_id));
+        setHistoryLoaded(true);
       } catch {
         try {
           // Fallback: question detail API (when coming from create - question_id)
@@ -122,6 +238,7 @@ export default function ChatRoomPage() {
             tags: res.data.tags?.map((t: any) => typeof t === 'string' ? t : t.name) || [],
           });
           setQuestionIdForWs(ticketId);
+          setHistoryLoaded(true);
         } catch (err) {
           console.error("Failed to fetch session details:", err);
           setSessionDetails({
@@ -130,6 +247,7 @@ export default function ChatRoomPage() {
             tags: [],
           });
           setQuestionIdForWs(null);
+          setHistoryLoaded(true);
         }
       }
     };
@@ -137,14 +255,37 @@ export default function ChatRoomPage() {
     fetchSession();
   }, [ticketId]);
 
+  useEffect(() => {
+    if (!questionIdForWs) return;
+    api
+      .get(`/chat/sessions/${questionIdForWs}/members/`)
+      .then((res) => {
+        const data = res.data as {
+          participants?: Array<{
+            id: number;
+            username: string;
+            first_name: string;
+            last_name: string;
+            profile_image_url?: string | null;
+          }>;
+          online_user_ids?: number[];
+        };
+        setParticipants(data.participants || []);
+        setOnlineUserIds((data.online_user_ids || []).map((id) => Number(id)));
+      })
+      .catch(() => {
+        // ignore
+      });
+  }, [questionIdForWs]);
+
   // ----------------------------------------------------------------------
   // WEBSOCKET CONNECTION (requires question_id - backend looks up session by question)
   // ----------------------------------------------------------------------
   useEffect(() => {
     const qId = questionIdForWs;
-    if (!qId) return;
+    if (!qId || !historyLoaded) return;
 
-    const wsUrl = `ws://127.0.0.1:8000/ws/chat/${qId}/`;
+    const wsUrl = getChatWebSocketUrl(qId);
     wsRef.current = new WebSocket(wsUrl);
 
     wsRef.current.onopen = () => {
@@ -154,20 +295,27 @@ export default function ChatRoomPage() {
 
     wsRef.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      
+
+      if (data.type === 'presence_update' && Array.isArray(data.online_user_ids)) {
+        setOnlineUserIds(data.online_user_ids.map((id: number) => Number(id)));
+        return;
+      }
+
       if (data.type === 'chat_message') {
+        const isVoice = data.message_type === 'audio' || data.message_type === 'voice';
         setMessages((prev) =>[
           ...prev,
           {
             id: data.message_id?.toString() || Date.now().toString(),
             text: data.message,
-            type: data.message_type === 'code' ? 'code' : 'text',
-            sender: data.sender_id === currentUserId ? 'user' : 'other',
+            type: data.message_type === 'code' ? 'code' : isVoice ? 'voice' : 'text',
+            sender: Number(data.sender_id) === Number(currentUserId) ? 'user' : 'other',
             timestamp: new Date(data.created_at || Date.now()),
             name: data.username || 'Unknown',
+            avatarUrl: data.sender_avatar_url || undefined,
             codeSnippet: data.code_snippet,
             codeLanguage: detectLanguage(data.code_snippet),
-            audioUrl: data.file_url,
+            audioUrl: normalizeFileUrl(isVoice ? data.file_url : undefined),
           }
         ]);
       }
@@ -181,7 +329,7 @@ export default function ChatRoomPage() {
     return () => {
       wsRef.current?.close();
     };
-  }, [questionIdForWs, currentUserId]);
+  }, [questionIdForWs, currentUserId, historyLoaded]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -209,6 +357,50 @@ export default function ChatRoomPage() {
 
     wsRef.current.send(JSON.stringify(payload));
     setMessageInput('');
+  };
+
+  const startRecording = async () => {
+    if (isRecording) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+      recorder.onstop = async () => {
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        stream.getTracks().forEach((track) => track.stop());
+        try {
+          const audioBase64 = await blobToBase64(blob);
+          wsRef.current?.send(
+            JSON.stringify({
+              type: 'message',
+              message: '',
+              message_type: 'voice',
+              audio_base64: audioBase64,
+              file_name: `voice-${Date.now()}.webm`,
+            })
+          );
+        } catch (error) {
+          console.error('Failed to send voice message:', error);
+        }
+      };
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Failed to start recording:', error);
+    }
+  };
+
+  const stopRecording = () => {
+    if (!mediaRecorderRef.current) return;
+    mediaRecorderRef.current.stop();
+    mediaRecorderRef.current = null;
+    setIsRecording(false);
   };
 
   const handleComposerKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -243,11 +435,33 @@ export default function ChatRoomPage() {
         <div className="flex min-w-0 items-center justify-between gap-3">
           <div className="min-w-0 flex-1 space-y-1">
               <div className="flex min-w-0 items-center gap-2">
+                {owner && (
+                  <Avatar className="h-10 w-10 border-4 border-white">
+                    <AvatarImage src={owner.profile_image_url || undefined} />
+                    <AvatarFallback>
+                      {(owner.first_name || owner.username || 'S').charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                )}
                 <h2 className="min-w-0 truncate font-medium text-lg text-foreground">
                   {sessionDetails?.title || `Loading Session #${ticketId}...`}
                 </h2>
                 <span className={cn("w-2 h-2 rounded-full animate-pulse", isConnected ? "bg-green-500" : "bg-red-500")} />
               </div>
+              {owner && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Avatar className="h-5 w-5">
+                    <AvatarImage src={owner.profile_image_url || undefined} />
+                    <AvatarFallback className="text-[10px]">
+                      {(owner.first_name || owner.username || 'S').charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span>
+                    {`${owner.first_name || ''} ${owner.last_name || ''}`.trim() ||
+                      owner.username}
+                  </span>
+                </div>
+              )}
               <div className="flex flex-wrap gap-2">
                 {sessionDetails?.tags.map((cat, index) => (
                   <span key={index} className="px-2 py-0.5 bg-muted text-muted-foreground text-xs rounded-full">
@@ -256,9 +470,79 @@ export default function ChatRoomPage() {
                 ))}
               </div>
           </div>
-          <Button variant="ghost" size="icon" className="hover:bg-muted shrink-0">
-            <MoreVertical className="h-5 w-5 text-foreground" />
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="hover:bg-muted">
+                  <Users className="h-5 w-5 text-foreground" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right">
+                <div className="p-6">
+                  <div className="flex items-center justify-between">
+                    <SheetHeader>
+                      <SheetTitle className="text-base">Members</SheetTitle>
+                    </SheetHeader>
+                  </div>
+                  <ScrollArea className="mt-4 h-[70vh] pr-3">
+                    <div className="mb-4 text-xs font-semibold text-muted-foreground flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                      ONLINE
+                    </div>
+                    <div className="grid gap-3">
+                      {onlineParticipants.map((participant) => {
+                        const displayName =
+                          `${participant.first_name || ''} ${participant.last_name || ''}`.trim() ||
+                          participant.username;
+                        return (
+                          <div key={`online-${participant.id}`} className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src={participant.profile_image_url || undefined} />
+                              <AvatarFallback className="text-xs">
+                                {(displayName || 'U').charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="text-sm font-medium text-foreground">{displayName}</div>
+                              <div className="text-xs text-muted-foreground">member</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-6 mb-4 text-xs font-semibold text-muted-foreground flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-slate-400" />
+                      OFFLINE
+                    </div>
+                    <div className="grid gap-3">
+                      {offlineParticipants.map((participant) => {
+                        const displayName =
+                          `${participant.first_name || ''} ${participant.last_name || ''}`.trim() ||
+                          participant.username;
+                        return (
+                          <div key={`offline-${participant.id}`} className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src={participant.profile_image_url || undefined} />
+                              <AvatarFallback className="text-xs">
+                                {(displayName || 'U').charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="text-sm font-medium text-foreground">{displayName}</div>
+                              <div className="text-xs text-muted-foreground">member</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
+                </div>
+              </SheetContent>
+            </Sheet>
+            <Button variant="ghost" size="icon" className="hover:bg-muted">
+              <MoreVertical className="h-5 w-5 text-foreground" />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -284,6 +568,7 @@ export default function ChatRoomPage() {
           {messages.map((msg) => (
             <div key={msg.id} className={cn('flex gap-3 max-w-[85%]', msg.sender === 'user' ? 'ml-auto flex-row-reverse' : '')}>
               <Avatar className="h-8 w-8 flex-shrink-0 mt-1">
+                <AvatarImage src={msg.avatarUrl || undefined} />
                 <AvatarFallback className={cn("text-xs text-white", msg.sender === 'user' ? "bg-[#03624c]" : "bg-slate-600")}>
                   {msg.name.charAt(0).toUpperCase()}
                 </AvatarFallback>
@@ -297,8 +582,10 @@ export default function ChatRoomPage() {
                     <div className="px-1 py-0.5"><p className="text-4xl leading-none">{msg.text}</p></div>
                   ) : (
                     <div className={cn('rounded-2xl px-4 py-2 break-words', 
-                        msg.sender === 'user' ? 'bg-[#03624c] text-white rounded-tr-sm' : 'bg-white border border-border text-foreground rounded-tl-sm')}>
-                      <p className="text-[14px] leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                        msg.sender === 'user' ? 'bg-[#03624c] text-white rounded-tr-sm' : 'bg-white dark:bg-card border border-border text-foreground rounded-tl-sm')}>
+                      <p className="text-[14px] leading-relaxed whitespace-pre-wrap">
+                        {msg.text ? renderLinkedText(msg.text) : null}
+                      </p>
                     </div>
                   )
                 )}
@@ -324,6 +611,10 @@ export default function ChatRoomPage() {
                   </div>
                 )}
 
+                {msg.type === 'voice' && msg.audioUrl && (
+                  <VoiceMessageBubble audioUrl={msg.audioUrl} />
+                )}
+
                 <span className="text-[10px] text-muted-foreground px-1 mt-0.5">
                   {formatTime(msg.timestamp)}
                 </span>
@@ -344,6 +635,40 @@ export default function ChatRoomPage() {
             rows={1}
             className="w-full max-h-32 min-h-[40px] resize-none overflow-y-auto bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground"
           />
+          <div className="relative flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowEmojiPicker((prev) => !prev)}
+              className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted"
+              aria-label="Add emoji"
+            >
+              <Smile className="h-5 w-5 text-muted-foreground" />
+            </button>
+            {showEmojiPicker && (
+              <div className="absolute bottom-12 right-0 z-50">
+                <EmojiPicker
+                  onEmojiClick={(emoji) => {
+                    setMessageInput((prev) => `${prev}${emoji.emoji}`);
+                  }}
+                />
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => (isRecording ? stopRecording() : startRecording())}
+              className={cn(
+                'flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted',
+                isRecording && 'text-red-500'
+              )}
+              aria-label={isRecording ? 'Stop recording' : 'Record voice message'}
+            >
+              {isRecording ? (
+                <Pause className="h-5 w-5" />
+              ) : (
+                <Mic className="h-5 w-5 text-muted-foreground" />
+              )}
+            </button>
+          </div>
           <Button
             onClick={sendCurrentMessage}
             disabled={!messageInput.trim() || !isConnected}
@@ -356,6 +681,83 @@ export default function ChatRoomPage() {
           Pro tip: Paste code blocks or use Markdown <code>```python</code> to automatically format code.
         </p>
       </div>
+    </div>
+  );
+}
+
+function VoiceMessageBubble({ audioUrl }: { audioUrl: string }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  const togglePlayback = () => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) setCurrentTime(audioRef.current.currentTime);
+  };
+
+  const handleLoadedMetadata = () => {
+    if (audioRef.current) setDuration(audioRef.current.duration);
+  };
+
+  const handleEnded = () => {
+    setIsPlaying(false);
+    setCurrentTime(0);
+  };
+
+  const formatTime = (secs: number) => {
+    const s = Math.floor(secs % 60)
+      .toString()
+      .padStart(2, '0');
+    const m = Math.floor(secs / 60)
+      .toString()
+      .padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
+  const timeLabel = formatTime(currentTime || duration || 0);
+  const progress = duration > 0 ? currentTime / duration : 0;
+
+  return (
+    <div className="flex items-center gap-3 rounded-full border border-border bg-card px-4 py-2 shadow-sm w-[260px]">
+      <button
+        onClick={togglePlayback}
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-white"
+        aria-label={isPlaying ? 'Pause voice message' : 'Play voice message'}
+      >
+        {isPlaying ? (
+          <Pause className="h-4 w-4" />
+        ) : (
+          <Play className="h-4 w-4 ml-0.5" />
+        )}
+      </button>
+      <div className="flex-1">
+        <div className="h-1 w-full rounded-full bg-muted">
+          <div
+            className="h-1 rounded-full bg-black"
+            style={{ width: `${Math.min(progress * 100, 100)}%` }}
+          />
+        </div>
+      </div>
+      <span className="text-[11px] text-muted-foreground">{timeLabel}</span>
+      <audio
+        ref={audioRef}
+        src={audioUrl}
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={handleLoadedMetadata}
+        onEnded={handleEnded}
+        className="hidden"
+      />
     </div>
   );
 }

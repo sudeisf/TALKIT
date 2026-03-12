@@ -9,6 +9,22 @@ from django.core.files.base import ContentFile
 
 # Make sure these imports match your actual app name
 from .models import ChatMessage, ChatSession, MessageReaction
+from cloudinary.utils import cloudinary_url
+
+
+def _profile_image_url(user):
+    if not user:
+        return None
+    image_field = getattr(user, "profile_image", None)
+    # CloudinaryField can expose a direct URL even when public_id isn't set.
+    direct_url = getattr(image_field, "url", None)
+    if direct_url:
+        return direct_url
+    public_id = getattr(image_field, "public_id", None)
+    if not public_id:
+        return None
+    secure_url, _ = cloudinary_url(public_id, secure=True)
+    return secure_url
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -152,6 +168,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'message': created_message['message_content'],
                 'sender_id': self.user.id,
                 'username': self.user.username,
+                'sender_avatar_url': _profile_image_url(self.user),
                 'message_type': created_message['message_type'],
                 'code_snippet': created_message['code_snippet'],
                 'file_url': created_message['file_url'],
@@ -168,6 +185,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'message': event.get('message', ''),
             'sender_id': event.get('sender_id'),
             'username': event.get('username'),
+            'sender_avatar_url': event.get('sender_avatar_url'),
             'message_type': event.get('message_type', 'text'),
             'code_snippet': event.get('code_snippet'),
             'file_url': event.get('file_url'),

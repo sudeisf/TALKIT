@@ -2,7 +2,7 @@
 
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { BookOpen, MoreVertical, Mic, Play, Square } from 'lucide-react';
+import { BookOpen, MoreVertical, Mic, Play, Square, Users } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -11,31 +11,15 @@ import {
   MessageInput,
   type OutgoingChatMessage,
 } from '@/components/helper/inputBox';
-import Memebers from '@/components/learner/Memebers';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useChatSessionDetailQuery } from '@/query/questionMutation';
+import api from '@/lib/api/axiosInstance';
+import type { ChatSessionParticipantItem } from '@/types/question';
+import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
-const userInfo = {
-  name: 'Sudeis Fedlu',
-  email: 'sudeisfed@gmail.com',
-  avatar: 'https://github.com/shadcn.png',
-  bio: 'Passionate learner focused on mastering programming and technology. Always eager to explore new concepts and improve my skills.',
-  location: 'Addis Ababa, Ethiopia',
-  role: 'Software engineer',
-  username: 'sudeisfed',
-  phone: '+251 912 345 678',
-  coverImage:
-    'https://images.unsplash.com/photo-1518709268805-4e9042af2176?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1925&q=80',
-  skills: ['React', 'Typescript', 'python', 'ML', 'Tailwindcss', 'NodeJs'],
-  sessionsJoined: 24,
-  ongoingSessions: 3,
-  bookmarksSaved: 18,
-  totalQuestions: 30,
-  level: 8,
-  experience: 1250,
-  correctAnswers: 200,
-};
+const STATUS_LABEL_ONLINE = 'ONLINE';
+const STATUS_LABEL_OFFLINE = 'OFFLINE';
 
 interface Message {
   id: string;
@@ -44,6 +28,7 @@ interface Message {
   sender: 'user' | 'other';
   timestamp: Date;
   avatar?: string;
+  avatarUrl?: string | null;
   name: string;
   audioUrl?: string;
   codeSnippet?: string;
@@ -60,6 +45,66 @@ const isEmojiOnly = (text?: string) => {
     /[\p{Emoji_Presentation}\uFE0F\u200D\p{Extended_Pictographic}]/gu;
   const onlyEmoji = trimmed.replace(emojiRegex, '').trim().length === 0;
   return onlyEmoji;
+};
+
+const getChatWebSocketUrl = (questionId: string) => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  try {
+    const parsed = new URL(apiUrl);
+    const wsProtocol = parsed.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${wsProtocol}//${parsed.host}/ws/chat/${encodeURIComponent(questionId)}/`;
+  } catch {
+    return `ws://localhost:8000/ws/chat/${encodeURIComponent(questionId)}/`;
+  }
+};
+
+const renderLinkedText = (text: string) => {
+  const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
+  const parts = text.split(urlRegex);
+  return parts.map((part, index) => {
+    if (!part) return null;
+    if (/^(https?:\/\/|www\.)/i.test(part)) {
+      const href = part.startsWith('http') ? part : `https://${part}`;
+      return (
+        <a
+          key={`link-${index}`}
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          className="text-[#03624C] underline underline-offset-2"
+        >
+          {part}
+        </a>
+      );
+    }
+    return <span key={`text-${index}`}>{part}</span>;
+  });
+};
+
+const blobToBase64 = (blob: Blob) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+      } else {
+        reject(new Error('Failed to read audio data.'));
+      }
+    };
+    reader.onerror = () => reject(new Error('Failed to read audio data.'));
+    reader.readAsDataURL(blob);
+  });
+
+const normalizeFileUrl = (url?: string | null) => {
+  if (!url) return undefined;
+  if (/^https?:\/\//i.test(url)) return url;
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  try {
+    const parsed = new URL(apiUrl);
+    return `${parsed.origin}${url.startsWith('/') ? url : `/${url}`}`;
+  } catch {
+    return url;
+  }
 };
 
 export default function sessionBox() {
@@ -80,7 +125,16 @@ export default function sessionBox() {
   };
 
   const [messages, setMessages] = useState<Message[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [participants, setParticipants] = useState<ChatSessionParticipantItem[]>([]);
+  const [onlineUserIds, setOnlineUserIds] = useState<number[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const currentUserId =
+    sessionDetail?.current_user_id ??
+    sessionDetail?.messages.find((message) => message.is_mine)?.sender.id ??
+    null;
 
   useEffect(() => {
     if (!sessionDetail) return;
@@ -100,63 +154,126 @@ export default function sessionBox() {
         sender: message.is_mine ? 'user' : 'other',
         timestamp: new Date(message.created_at),
         name: resolvedName,
+        avatarUrl: message.sender.profile_image_url || undefined,
         codeSnippet: message.code_snippet || undefined,
         codeLanguage: isCode ? 'javascript' : undefined,
-        audioUrl: isVoice ? message.file_url || undefined : undefined,
+        audioUrl: normalizeFileUrl(isVoice ? message.file_url || undefined : undefined),
       };
     });
 
     setMessages(mappedMessages);
+    setHistoryLoaded(true);
   }, [sessionDetail]);
 
-  const memberParticipants =
-    sessionDetail?.participants.map((member) => {
-      const name = `${member.first_name || ''} ${member.last_name || ''}`.trim();
-      const display = name || member.username || 'U';
-      const initials = display
-        .split(' ')
-        .slice(0, 2)
-        .map((part) => part.charAt(0).toUpperCase())
-        .join('');
+  useEffect(() => {
+    const questionId = sessionDetail?.question_id;
+    if (!questionId) return;
 
-      return {
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(display)}`,
-        initials: initials || 'U',
-      };
-    }) || [];
+    api
+      .get(`/chat/sessions/${questionId}/members/`)
+      .then((res) => {
+        const data = res.data as {
+          participants?: ChatSessionParticipantItem[];
+          online_user_ids?: number[];
+        };
+        setParticipants(data.participants || []);
+        setOnlineUserIds(data.online_user_ids || []);
+      })
+      .catch(() => {
+        setParticipants(sessionDetail?.participants || []);
+      });
+  }, [sessionDetail]);
+
+  useEffect(() => {
+    const questionId = sessionDetail?.question_id;
+    if (!questionId || !historyLoaded) return;
+
+    const wsUrl = getChatWebSocketUrl(String(questionId));
+    wsRef.current = new WebSocket(wsUrl);
+
+    wsRef.current.onopen = () => {
+      setIsConnected(true);
+    };
+
+    wsRef.current.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'presence_update' && Array.isArray(data.online_user_ids)) {
+        setOnlineUserIds(data.online_user_ids.map((id: number) => Number(id)));
+        return;
+      }
+      if (data.type !== 'chat_message') return;
+
+      const isCode = data.message_type === 'code';
+      const isVoice = data.message_type === 'audio' || data.message_type === 'voice';
+      const senderId = Number(data.sender_id);
+      const resolvedCurrentUserId = currentUserId != null ? Number(currentUserId) : null;
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: data.message_id?.toString() || Date.now().toString(),
+          text: isCode ? 'Code snippet' : data.message,
+          type: isCode ? 'code' : isVoice ? 'voice' : 'text',
+          sender:
+            resolvedCurrentUserId != null && senderId === resolvedCurrentUserId
+              ? 'user'
+              : 'other',
+          timestamp: new Date(data.created_at || Date.now()),
+          name: data.username || 'User',
+          avatarUrl: data.sender_avatar_url || undefined,
+          codeSnippet: data.code_snippet,
+          codeLanguage: isCode ? 'javascript' : undefined,
+          audioUrl: normalizeFileUrl(isVoice ? data.file_url || undefined : undefined),
+        },
+      ]);
+    };
+
+    wsRef.current.onclose = () => {
+      setIsConnected(false);
+    };
+
+    return () => {
+      wsRef.current?.close();
+    };
+  }, [sessionDetail?.question_id, currentUserId, historyLoaded]);
+
+  const owner = sessionDetail?.asked_by;
+  const ownerName =
+    owner && (owner.first_name || owner.last_name)
+      ? `${owner.first_name || ''} ${owner.last_name || ''}`.trim()
+      : owner?.username || 'Session Owner';
+
+  const onlineParticipants = participants.filter((participant) =>
+    onlineUserIds.includes(participant.id)
+  );
+  const offlineParticipants = participants.filter(
+    (participant) => !onlineUserIds.includes(participant.id)
+  );
 
   const handleSendTextMessage = (payload: OutgoingChatMessage) => {
     if (!payload.message.trim() && !payload.code_snippet?.trim()) return;
 
-    const isCode = payload.message_type === 'code';
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: (prev.length + 1).toString(),
-        text: isCode ? 'Code snippet' : payload.message,
-        type: isCode ? 'code' : 'text',
-        sender: 'user',
-        timestamp: new Date(),
-        name: 'Instructor',
-        codeSnippet: payload.code_snippet,
-        codeLanguage: payload.code_language,
-      },
-    ]);
+    if (wsRef.current && isConnected) {
+      wsRef.current.send(JSON.stringify(payload));
+    }
   };
 
-  const handleVoiceMessage = (audioBlob: Blob) => {
-    const url = URL.createObjectURL(audioBlob);
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: (prev.length + 1).toString(),
-        type: 'voice',
-        sender: 'user',
-        timestamp: new Date(),
-        name: 'Instructor',
-        audioUrl: url,
-      },
-    ]);
+  const handleVoiceMessage = async (audioBlob: Blob) => {
+    if (!wsRef.current || !isConnected) return;
+    try {
+      const audioBase64 = await blobToBase64(audioBlob);
+      wsRef.current.send(
+        JSON.stringify({
+          type: 'message',
+          message: '',
+          message_type: 'voice',
+          audio_base64: audioBase64,
+          file_name: `voice-${Date.now()}.webm`,
+        })
+      );
+    } catch (error) {
+      console.error('Failed to send voice message:', error);
+    }
   };
 
   useEffect(() => {
@@ -180,15 +297,18 @@ export default function sessionBox() {
       <div className="px-4 py-2 border-b rounded-t-lg border-border bg-card shrink-0">
         <div className="flex items-center justify-between mb-3">
           <div className="flex jus items-center gap-2">
-            <Avatar className="w-15 h-15 border-8 border-white">
-              <AvatarImage src={userInfo.avatar} />
-              <AvatarFallback>{userInfo.name.charAt(0)}</AvatarFallback>
+            <Avatar className="w-12 h-12 border-4 border-white">
+              <AvatarImage src={owner?.profile_image_url || undefined} />
+              <AvatarFallback>{ownerName.charAt(0).toUpperCase()}</AvatarFallback>
             </Avatar>
             <div className="space-y-2">
               <h2 className="font-medium text-md font-sans text-foreground">
                 {sessionDetail?.title ||
                   'How to integrate payment gateway in React?'}
               </h2>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>{ownerName}</span>
+              </div>
               <div className="flex flex-wrap gap-2">
                 {(sessionDetail?.tags || []).map((cat, index) => (
                   <span
@@ -202,16 +322,83 @@ export default function sessionBox() {
           </div>
             </div>
             <div className="flex flex-col justify-end items-end">
-                      <Button variant="ghost" size="icon" className="hover:bg-accent">
-                        <MoreVertical className="h-5 w-5 text-foreground" />
-                      </Button>
-                      <div className="space-y-3">
-                        <Memebers participants={memberParticipants} />
+              <div className="flex items-center gap-2">
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon" className="hover:bg-accent">
+                      <Users className="h-5 w-5 text-foreground" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" >
+                    <div className=" p-4">
+                      <div className="flex items-center justify-between">
+                        <SheetHeader>
+                          <SheetTitle className="text-base">Members</SheetTitle>
+                        </SheetHeader>
                       </div>
-                  </div>
+                      <ScrollArea className="mt-4 h-[70vh] pr-3">
+                        <div className="mb-4 text-xs font-semibold text-muted-foreground flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                          {STATUS_LABEL_ONLINE}
+                        </div>
+                        <div className="grid gap-3">
+                          {onlineParticipants.map((participant) => {
+                            const displayName =
+                              `${participant.first_name || ''} ${participant.last_name || ''}`.trim() ||
+                              participant.username;
+                            return (
+                              <div key={`online-${participant.id}`} className="flex items-center gap-3">
+                                <Avatar className="h-10 w-10">
+                                  <AvatarImage src={participant.profile_image_url || undefined} />
+                                  <AvatarFallback className="text-xs">
+                                    {(displayName || 'U').charAt(0).toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <div className="text-sm font-medium text-foreground">{displayName}</div>
+                                  <div className="text-xs text-muted-foreground">{participant.role || 'member'}</div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="mt-6 mb-4 text-xs font-semibold text-muted-foreground flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-slate-400" />
+                          {STATUS_LABEL_OFFLINE}
+                        </div>
+                        <div className="grid gap-3">
+                          {offlineParticipants.map((participant) => {
+                            const displayName =
+                              `${participant.first_name || ''} ${participant.last_name || ''}`.trim() ||
+                              participant.username;
+                            return (
+                              <div key={`offline-${participant.id}`} className="flex items-center gap-3">
+                                <Avatar className="h-10 w-10">
+                                  <AvatarImage src={participant.profile_image_url || undefined} />
+                                  <AvatarFallback className="text-xs">
+                                    {(displayName || 'U').charAt(0).toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <div className="text-sm font-medium text-foreground">{displayName}</div>
+                                  <div className="text-xs text-muted-foreground">{participant.role || 'member'}</div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </ScrollArea>
+                    </div>
+                  </SheetContent>
+                </Sheet>
+                <Button variant="ghost" size="icon" className="hover:bg-accent">
+                  <MoreVertical className="h-5 w-5 text-foreground" />
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
-   
+
 
       {/* Message Area */}
       <ScrollArea className="flex-1 min-h-[400px] max-h-[calc(100vh-212px)]">
@@ -295,13 +482,7 @@ function ChatMessageRow({
       )}
     >
       <Avatar className="h-8 w-8 flex-shrink-0">
-        <AvatarImage
-          src={
-            message.sender === 'user'
-              ? '/placeholder.svg?height=32&width=32&query=user avatar'
-              : '/placeholder.svg?height=32&width=32&query=professional woman avatar'
-          }
-        />
+        <AvatarImage src={message.avatarUrl || undefined} />
         <AvatarFallback className="bg-muted text-foreground text-xs">
           {message.sender === 'user' ? 'YU' : 'SC'}
         </AvatarFallback>
@@ -315,7 +496,7 @@ function ChatMessageRow({
       >
         {/* text bubble */}
         {message.type === 'text' && (
-          isEmojiOnly(message.text) && message.sender === 'user' ? (
+          isEmojiOnly(message.text) ? (
             <div className="px-1 py-0.5">
               <p className="text-3xl leading-none">{message.text}</p>
             </div>
@@ -328,7 +509,9 @@ function ChatMessageRow({
                   : 'bg-card text-foreground border border-border'
               )}
             >
-              <p className="text-sm leading-relaxed">{message.text}</p>
+              <p className="text-sm leading-relaxed">
+                {message.text ? renderLinkedText(message.text) : null}
+              </p>
             </div>
           )
         )}

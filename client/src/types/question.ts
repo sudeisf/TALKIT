@@ -150,6 +150,7 @@ export interface ChatSessionMessageItem {
     username: string;
     first_name: string;
     last_name: string;
+    profile_image_url?: string | null;
   };
   is_mine: boolean;
 }
@@ -159,12 +160,21 @@ export interface ChatSessionParticipantItem {
   username: string;
   first_name: string;
   last_name: string;
+  profile_image_url?: string | null;
   role: string;
 }
 
 export interface ChatSessionDetailResponse {
   chat_session_id: number;
+  current_user_id: number;
   question_id: number;
+  asked_by: {
+    id: number | null;
+    username: string | null;
+    first_name: string | null;
+    last_name: string | null;
+    profile_image_url?: string | null;
+  };
   title: string;
   description: string;
   status: 'searching' | 'ongoing' | 'answered' | 'closed';

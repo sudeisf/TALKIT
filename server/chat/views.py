@@ -4,6 +4,22 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import ChatMessage, ChatSession
+from cloudinary.utils import cloudinary_url
+
+
+def _profile_image_url(user):
+    if not user:
+        return None
+    image_field = getattr(user, "profile_image", None)
+    # CloudinaryField can expose a direct URL even when public_id isn't set.
+    direct_url = getattr(image_field, "url", None)
+    if direct_url:
+        return direct_url
+    public_id = getattr(image_field, "public_id", None)
+    if not public_id:
+        return None
+    secure_url, _ = cloudinary_url(public_id, secure=True)
+    return secure_url
 
 
 class ChatSessionListView(APIView):
@@ -99,6 +115,7 @@ class ChatSessionDetailView(APIView):
                 'username': user.username,
                 'first_name': user.first_name,
                 'last_name': user.last_name,
+                'profile_image_url': _profile_image_url(user),
                 'role': user.role,
             }
             for user in chat_session.participants.all()
@@ -113,6 +130,7 @@ class ChatSessionDetailView(APIView):
                     'username': asked_by.username,
                     'first_name': asked_by.first_name,
                     'last_name': asked_by.last_name,
+                    'profile_image_url': _profile_image_url(asked_by),
                     'role': asked_by.role,
                 },
             )
@@ -130,6 +148,7 @@ class ChatSessionDetailView(APIView):
                     'username': message.sender.username,
                     'first_name': message.sender.first_name,
                     'last_name': message.sender.last_name,
+                    'profile_image_url': _profile_image_url(message.sender),
                 },
                 'is_mine': message.sender_id == request.user.id,
             }
@@ -139,7 +158,15 @@ class ChatSessionDetailView(APIView):
         return Response(
             {
                 'chat_session_id': chat_session.id,
+                'current_user_id': request.user.id,
                 'question_id': chat_session.question_id,
+                'asked_by': {
+                    'id': asked_by.id if asked_by else None,
+                    'username': asked_by.username if asked_by else None,
+                    'first_name': asked_by.first_name if asked_by else None,
+                    'last_name': asked_by.last_name if asked_by else None,
+                    'profile_image_url': _profile_image_url(asked_by),
+                },
                 'title': chat_session.question.title,
                 'description': chat_session.question.description,
                 'status': chat_session.question.status,
@@ -185,6 +212,7 @@ class ChatSessionMembersView(APIView):
                 "username": user.username,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
+                "profile_image_url": _profile_image_url(user),
                 "role": user.role,
             }
             for user in chat_session.participants.all()
@@ -199,6 +227,7 @@ class ChatSessionMembersView(APIView):
                     "username": asked_by.username,
                     "first_name": asked_by.first_name,
                     "last_name": asked_by.last_name,
+                    "profile_image_url": _profile_image_url(asked_by),
                     "role": asked_by.role,
                 },
             )
