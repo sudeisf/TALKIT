@@ -725,6 +725,20 @@ class VoteQuestionView(APIView):
 			},
 			status=status.HTTP_200_OK,
 		)
+
+class ToggleBookmarkView(APIView):
+	permission_classes = [permissions.IsAuthenticated]
+
+	def post(self, request, question_id):
+		question = get_object_or_404(Question, id=question_id)
+		bookmark = Bookmark.objects.filter(user=request.user, question=question).first()
+
+		if bookmark:
+			bookmark.delete()
+			return Response({"is_favorite": False}, status=status.HTTP_200_OK)
+
+		Bookmark.objects.create(user=request.user, question=question)
+		return Response({"is_favorite": True}, status=status.HTTP_200_OK)
     
 class PublicQuestionListView(generics.ListAPIView):
     queryset = Question.objects.all().order_by('-created_at')

@@ -14,6 +14,7 @@ from .views import (
     RecentActivityView,
     JoinQuestionView,
     VoteQuestionView,
+    ToggleBookmarkView,
 )
 
 urlpatterns = [
@@ -29,5 +30,6 @@ urlpatterns = [
     path("<int:question_id>/", QuestionDetailView.as_view(), name="question-detail"),
     path('<int:question_id>/join/', JoinQuestionView.as_view(), name='join-question'),
     path('<int:question_id>/vote/', VoteQuestionView.as_view(), name='vote-question'),
+    path('<int:question_id>/bookmark/', ToggleBookmarkView.as_view(), name='toggle-bookmark'),
     path('feed/', PublicQuestionListView.as_view(), name='question-feed'),
 ]

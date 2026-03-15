@@ -138,6 +138,7 @@ export interface ChatSessionListItem {
     last_name: string | null;
     profile_image_url?: string | null;
   };
+  is_favorite?: boolean;
   participant_count: number;
   is_active: boolean;
   last_message: string | null;

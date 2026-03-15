@@ -141,6 +141,17 @@ export const voteQuestion = async (questionId: number, voteType: 'UP' | 'DOWN') 
   return response.data;
 };
 
+export const toggleQuestionBookmark = async (questionId: number) => {
+  const response = await API.post<{ is_favorite: boolean }>(
+    `/questions/${questionId}/bookmark/`,
+    {},
+    {
+      withCredentials: true,
+    }
+  );
+  return response.data;
+};
+
 export const getChatSessions = async (searchQuery?: string) => {
   try {
     const response = await API.get<ChatSessionListItem[]>('/chat/sessions/', {

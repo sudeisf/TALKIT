@@ -281,7 +281,7 @@ export default function sessionBox() {
   }, [messages]);
 
   return (
-    <div className="flex rounded-lg border border-border mt-4 mx-4 shadow-xs flex-col h-[calc(100vh-100px)] bg-background">
+    <div className="flex min-h-0 rounded-lg border border-border mt-4 mx-4 shadow-xs flex-col h-[calc(100vh-100px)] bg-background">
       {isSessionLoading && (
         <div className="p-4 text-sm text-muted-foreground border-b border-border">
           Loading session...
@@ -419,9 +419,9 @@ export default function sessionBox() {
 
 
       {/* Message Area */}
-      <ScrollArea className="flex-1 min-h-[400px] max-h-[calc(100vh-212px)]">
+      <ScrollArea className="flex-1 min-h-0 h-full">
         <div
-          className="flex-1 p-4 space-y-4 bg-muted/30 overflow-y-auto"
+          className="flex-1 min-h-0 p-4 space-y-4 bg-muted/30"
           style={{ scrollBehavior: 'smooth' }}
         >
           {sessionDetail?.description && (

@@ -360,7 +360,7 @@ export default function ChatRoomPage() {
   // RENDER UI
   // ----------------------------------------------------------------------
   return (
-    <div className="flex min-w-0 flex-1 flex-col rounded-lg border border-border bg-background mt-2 mx-4 shadow-sm h-[calc(100vh-50px)]">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col rounded-lg border border-border bg-background mt-2 mx-4 shadow-sm h-[calc(100vh-50px)]">
       
       <div className="min-w-0 shrink-0 border-b border-border bg-card px-4 py-3">
         <div className="flex min-w-0 items-center justify-between gap-3">
@@ -496,7 +496,7 @@ export default function ChatRoomPage() {
       </div>
 
       <ScrollArea className="min-h-0 flex-1 bg-muted/20">
-        <div className="p-4 space-y-6">
+        <div className="min-h-0 p-4 space-y-6">
           
           {sessionDetails && (
             <div className="min-w-0 rounded-lg border border-border bg-card p-4 shadow-sm">

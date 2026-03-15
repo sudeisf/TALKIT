@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import ChatMessage, ChatSession
 from cloudinary.utils import cloudinary_url
+from questions.models import Bookmark
 
 
 def _profile_image_url(user):
@@ -53,6 +54,13 @@ class ChatSessionListView(APIView):
                 | Q(messages__message_content__icontains=search_query)
             ).distinct()
 
+        favorite_question_ids = set(
+            Bookmark.objects.filter(
+                user=request.user,
+                question_id__in=sessions.values_list('question_id', flat=True),
+            ).values_list('question_id', flat=True)
+        )
+
         data = []
         for session in sessions:
             asked_by = session.question.asked_by
@@ -72,6 +80,7 @@ class ChatSessionListView(APIView):
                         'last_name': asked_by.last_name if asked_by else None,
                         'profile_image_url': _profile_image_url(asked_by),
                     },
+                    'is_favorite': session.question_id in favorite_question_ids,
                     'participant_count': session.participant_count,
                     'is_active': session.is_active,
                     'last_message': (

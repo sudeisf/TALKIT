@@ -7,6 +7,7 @@ import SearchSessions from './sessionsSearch';
 import { usePathname, useRouter } from 'next/navigation';
 import SessionTabs, { type SessionTabKey } from './sessionTabs';
 import { useChatSessionsQuery } from '@/query/questionMutation';
+import { toggleQuestionBookmark } from '@/lib/api/questionApi';
 import { useEffect, useMemo, useState } from 'react';
 
 export default function SessionsList() {
@@ -15,7 +16,8 @@ export default function SessionsList() {
   const [searchValue, setSearchValue] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [activeTab, setActiveTab] = useState<SessionTabKey>('active');
-  const [favoriteSessionIds, setFavoriteSessionIds] = useState<number[]>([]);
+  const [favoriteOverrides, setFavoriteOverrides] = useState<Record<number, boolean>>({});
+  const [pendingFavorites, setPendingFavorites] = useState<Record<number, boolean>>({});
   const { data: sessions = [], isLoading, isError } = useChatSessionsQuery(debouncedSearch);
 
   useEffect(() => {
@@ -26,26 +28,12 @@ export default function SessionsList() {
     return () => window.clearTimeout(timeoutId);
   }, [searchValue]);
 
-  useEffect(() => {
-    const persisted = localStorage.getItem('helper-favorite-sessions');
-    if (!persisted) return;
-
-    try {
-      const parsed = JSON.parse(persisted);
-      if (Array.isArray(parsed)) {
-        setFavoriteSessionIds(parsed.filter((value) => Number.isFinite(value)));
-      }
-    } catch {
-      setFavoriteSessionIds([]);
+  const getIsFavorite = (sessionId: number, serverValue?: boolean) => {
+    if (sessionId in favoriteOverrides) {
+      return favoriteOverrides[sessionId];
     }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem(
-      'helper-favorite-sessions',
-      JSON.stringify(favoriteSessionIds)
-    );
-  }, [favoriteSessionIds]);
+    return Boolean(serverValue);
+  };
 
   const activeSessionId = useMemo(() => {
     const match = pathname.match(/^\/sessions\/(\d+)/);
@@ -77,7 +65,7 @@ export default function SessionsList() {
     const allCount = sessions.length;
     const activeCount = allCount - archivedCount;
     const favoritesCount = sessions.filter((session) =>
-      favoriteSessionIds.includes(session.session_id)
+      getIsFavorite(session.session_id, session.is_favorite)
     ).length;
 
     return {
@@ -86,7 +74,7 @@ export default function SessionsList() {
       favorites: favoritesCount,
       archived: archivedCount,
     } as Record<SessionTabKey, number>;
-  }, [sessions, favoriteSessionIds]);
+  }, [sessions, favoriteOverrides]);
 
   const sortedSessions = useMemo(() => {
     return [...sessions].sort((a, b) => {
@@ -100,8 +88,10 @@ export default function SessionsList() {
     if (activeTab === 'all') return sortedSessions;
     if (activeTab === 'active') return sortedSessions.filter((session) => !isArchivedSession(session));
     if (activeTab === 'archived') return sortedSessions.filter(isArchivedSession);
-    return sortedSessions.filter((session) => favoriteSessionIds.includes(session.session_id));
-  }, [activeTab, sortedSessions, favoriteSessionIds]);
+    return sortedSessions.filter((session) =>
+      getIsFavorite(session.session_id, session.is_favorite)
+    );
+  }, [activeTab, sortedSessions, favoriteOverrides]);
 
   const searchedSessions = useMemo(() => {
     const normalized = searchValue.trim().toLowerCase();
@@ -121,13 +111,26 @@ export default function SessionsList() {
     });
   }, [searchValue, visibleSessions]);
 
-  const toggleFavorite = (sessionId: number) => {
-    setFavoriteSessionIds((previous) => {
-      if (previous.includes(sessionId)) {
-        return previous.filter((id) => id !== sessionId);
-      }
-      return [...previous, sessionId];
-    });
+  const toggleFavorite = async (sessionId: number, questionId: number) => {
+    if (pendingFavorites[sessionId]) return;
+    const currentValue = getIsFavorite(sessionId, sessions.find((s) => s.session_id === sessionId)?.is_favorite);
+    const nextValue = !currentValue;
+
+    setFavoriteOverrides((prev) => ({ ...prev, [sessionId]: nextValue }));
+    setPendingFavorites((prev) => ({ ...prev, [sessionId]: true }));
+
+    try {
+      const result = await toggleQuestionBookmark(questionId);
+      setFavoriteOverrides((prev) => ({ ...prev, [sessionId]: result.is_favorite }));
+    } catch {
+      setFavoriteOverrides((prev) => ({ ...prev, [sessionId]: currentValue }));
+    } finally {
+      setPendingFavorites((prev) => {
+        const next = { ...prev };
+        delete next[sessionId];
+        return next;
+      });
+    }
   };
 
   const getEmptyStateText = () => {
@@ -192,24 +195,28 @@ export default function SessionsList() {
 
         {searchedSessions.map((session) => {
           const isActive = activeSessionId === session.session_id;
-          const isFavorite = favoriteSessionIds.includes(session.session_id);
+          const isFavorite = getIsFavorite(session.session_id, session.is_favorite);
+          const ownerName =
+            `${session.asked_by?.first_name || ''} ${session.asked_by?.last_name || ''}`.trim() ||
+            session.asked_by?.username ||
+            'Unassigned';
 
           return (
             <div
               onClick={() => router.push(`/sessions/${session.session_id}`)}
               key={`convo-${session.session_id}`}
-              className={`p-4 flex cursor-pointer flex-col gap-2 border-b border-border transition-colors ${
+              className={`mx-3 my-3 rounded-2xl border transition-all cursor-pointer ${
                 isActive
-                  ? 'bg-card dark:bg-neutral-900/90 border-l-2 border-l-[#03624C]'
-                  : 'bg-background hover:bg-muted/40'
+                  ? 'border-[#03624C] bg-[#F3FAF7] dark:bg-emerald-950/20 shadow-sm'
+                  : 'border-border/60 bg-card hover:border-[#03624C]/40 hover:bg-muted/30'
               }`}
             >
-              <div className="flex justify-between">
+              <div className="flex items-start justify-between px-4 pt-4">
                 <div className="flex gap-2">
                   {session.tags.slice(0, 2).map((tag, index) => (
                     <span
                       key={`tag-${index}`}
-                      className="bg-[#03624C]/12 text-[#03624C] text-sm px-2 rounded-sm"
+                      className="bg-[#DDF3EE] text-[#0F766E] text-xs px-2 py-0.5 rounded-md font-medium uppercase tracking-wide"
                     >
                       {tag}
                     </span>
@@ -223,11 +230,12 @@ export default function SessionsList() {
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation();
-                      toggleFavorite(session.session_id);
+                      toggleFavorite(session.session_id, session.question_id);
                     }}
                     className="inline-flex items-center justify-center"
                     aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                     title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                    disabled={pendingFavorites[session.session_id]}
                   >
                     <Star
                       className={`h-4 w-4 ${
@@ -239,22 +247,28 @@ export default function SessionsList() {
                   </button>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={normalizeAvatarUrl(session.asked_by?.profile_image_url)} />
-                  <AvatarFallback className="text-xs">
-                    {(session.asked_by?.first_name ||
-                      session.asked_by?.username ||
-                      'U')
-                      .charAt(0)
-                      .toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <h1 className="text-md text-foreground">{session.title}</h1>
+              <div className="px-4 pt-2">
+                <h1 className="text-[15px] font-medium text-foreground whitespace-normal break-words [overflow-wrap:anywhere]">
+                  {session.title}
+                </h1>
               </div>
-              <div className="truncate text-sm w-full flex items-center justify-between text-muted-foreground">
-                {session.last_message || session.description || 'No messages yet'}{' '}
-                <Dot className="w-8 h-8 text-muted-foreground" />
+              <div className="px-4 pb-4 pt-1 space-y-3">
+                <p className="text-sm text-muted-foreground line-clamp-2">
+                  {session.last_message || session.description || 'No messages yet'}
+                </p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={normalizeAvatarUrl(session.asked_by?.profile_image_url)} />
+                    <AvatarFallback className="text-[10px]">
+                      {(session.asked_by?.first_name ||
+                        session.asked_by?.username ||
+                        'U')
+                        .charAt(0)
+                        .toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span>Assigned: {ownerName}</span>
+                </div>
               </div>
             </div>
           );
