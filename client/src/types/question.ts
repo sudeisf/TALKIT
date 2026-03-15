@@ -131,6 +131,13 @@ export interface ChatSessionListItem {
   description: string;
   status: 'searching' | 'ongoing' | 'answered' | 'closed';
   tags: string[];
+  asked_by?: {
+    id: number | null;
+    username: string | null;
+    first_name: string | null;
+    last_name: string | null;
+    profile_image_url?: string | null;
+  };
   participant_count: number;
   is_active: boolean;
   last_message: string | null;

@@ -11,15 +11,13 @@ def _profile_image_url(user):
     if not user:
         return None
     image_field = getattr(user, "profile_image", None)
+    public_id = getattr(image_field, "public_id", None)
+    if public_id:
+        secure_url, _ = cloudinary_url(public_id, secure=True)
+        return secure_url
     # CloudinaryField can expose a direct URL even when public_id isn't set.
     direct_url = getattr(image_field, "url", None)
-    if direct_url:
-        return direct_url
-    public_id = getattr(image_field, "public_id", None)
-    if not public_id:
-        return None
-    secure_url, _ = cloudinary_url(public_id, secure=True)
-    return secure_url
+    return direct_url or None
 
 
 class ChatSessionListView(APIView):
@@ -39,7 +37,7 @@ class ChatSessionListView(APIView):
             base_filter = Q(participants=request.user) | Q(question__asked_by=request.user)
 
         sessions = (
-            ChatSession.objects.select_related('question')
+            ChatSession.objects.select_related('question', 'question__asked_by')
             .prefetch_related('question__tags', 'messages')
             .filter(base_filter)
             .annotate(participant_count=Count('participants', distinct=True))
@@ -57,6 +55,7 @@ class ChatSessionListView(APIView):
 
         data = []
         for session in sessions:
+            asked_by = session.question.asked_by
             last_message_obj = session.messages.order_by('-created_at').first()
             data.append(
                 {
@@ -66,6 +65,13 @@ class ChatSessionListView(APIView):
                     'description': session.question.description,
                     'status': session.question.status,
                     'tags': list(session.question.tags.values_list('name', flat=True)),
+                    'asked_by': {
+                        'id': asked_by.id if asked_by else None,
+                        'username': asked_by.username if asked_by else None,
+                        'first_name': asked_by.first_name if asked_by else None,
+                        'last_name': asked_by.last_name if asked_by else None,
+                        'profile_image_url': _profile_image_url(asked_by),
+                    },
                     'participant_count': session.participant_count,
                     'is_active': session.is_active,
                     'last_message': (

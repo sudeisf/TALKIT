@@ -16,15 +16,13 @@ def _profile_image_url(user):
     if not user:
         return None
     image_field = getattr(user, "profile_image", None)
+    public_id = getattr(image_field, "public_id", None)
+    if public_id:
+        secure_url, _ = cloudinary_url(public_id, secure=True)
+        return secure_url
     # CloudinaryField can expose a direct URL even when public_id isn't set.
     direct_url = getattr(image_field, "url", None)
-    if direct_url:
-        return direct_url
-    public_id = getattr(image_field, "public_id", None)
-    if not public_id:
-        return None
-    secure_url, _ = cloudinary_url(public_id, secure=True)
-    return secure_url
+    return direct_url or None
 
 
 class ChatConsumer(AsyncWebsocketConsumer):

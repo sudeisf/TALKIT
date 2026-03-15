@@ -1,6 +1,7 @@
 'use client';
 
 import { Dot, MessageCircle, Star } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '../ui/scroll-area';
 import ChatTabs from './chatTabs';
 import SearchSessions from './sessionSearch';
@@ -229,7 +230,21 @@ export default function ChatList() {
                   </button>
                 </div>
               </div>
-              <h1 className="text-md text-foreground line-clamp-2 break-words">{session.title}</h1>
+              <div className="flex items-center gap-3">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={normalizeAvatarUrl(session.asked_by?.profile_image_url)} />
+                  <AvatarFallback className="text-xs">
+                    {(session.asked_by?.first_name ||
+                      session.asked_by?.username ||
+                      'U')
+                      .charAt(0)
+                      .toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <h1 className="text-md text-foreground line-clamp-2 break-words">
+                  {session.title}
+                </h1>
+              </div>
               <div className="flex min-w-0 items-center gap-1 text-sm text-muted-foreground">
                 <p className="min-w-0 flex-1 truncate">
                   {session.last_message || session.description || 'No messages yet'}
@@ -243,3 +258,16 @@ export default function ChatList() {
     </div>
   );
 }
+const normalizeAvatarUrl = (url?: string | null) => {
+  if (!url) return undefined;
+  if (/^https?:\/\//i.test(url)) {
+    return url.replace(/^http:\/\//i, 'https://');
+  }
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    try {
+      const parsed = new URL(apiUrl);
+      return `${parsed.origin}${url.startsWith('/') ? url : `/${url}`}`;
+    } catch {
+      return url;
+    }
+};

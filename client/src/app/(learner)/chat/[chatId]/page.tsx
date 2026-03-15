@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { BookOpen, MessageSquare, MoreVertical, Pause, Play, Users } from 'lucide-react';
+import { BookOpen, MessageSquare, MoreVertical, Pause, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -405,7 +405,25 @@ export default function ChatRoomPage() {
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="hover:bg-muted">
-                  <Users className="h-5 w-5 text-foreground" />
+                  <div className="flex items-center -space-x-2">
+                    {participants.slice(0, 3).map((participant) => {
+                      const displayName =
+                        `${participant.first_name || ''} ${participant.last_name || ''}`.trim() ||
+                        participant.username ||
+                        'U';
+                      return (
+                        <Avatar key={`sheet-avatar-${participant.id}`} className="h-6 w-6 border-2 border-background">
+                          <AvatarImage src={participant.profile_image_url || undefined} />
+                          <AvatarFallback className="text-[9px]">
+                            {displayName.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      );
+                    })}
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-muted text-[10px] text-muted-foreground">
+                      +
+                    </div>
+                  </div>
                 </Button>
               </SheetTrigger>
               <SheetContent side="right">
@@ -483,9 +501,18 @@ export default function ChatRoomPage() {
           {sessionDetails && (
             <div className="min-w-0 rounded-lg border border-border bg-card p-4 shadow-sm">
               <div className="flex min-w-0 items-start gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#03624c]">
-                  <BookOpen className="h-4 w-4 text-white" />
-                </div>
+                {owner ? (
+                  <Avatar className="h-10 w-10 shrink-0 border-2 border-background">
+                    <AvatarImage src={owner.profile_image_url || undefined} />
+                    <AvatarFallback className="text-xs">
+                      {(owner.first_name || owner.username || 'S').charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#03624c]">
+                    <BookOpen className="h-4 w-4 text-white" />
+                  </div>
+                )}
                 <div className="min-w-0 flex-1">
                   <h4 className="mb-1 font-medium text-foreground">Problem Description</h4>
                   <p className="break-words text-sm text-muted-foreground leading-relaxed">

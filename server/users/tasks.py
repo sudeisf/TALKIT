@@ -42,8 +42,13 @@ def update_user_embedding(self, user_id):
         return
 
     from google import genai
+    from google.genai.errors import APIError
 
-    client = genai.Client(api_key=settings.GOOGLE_API_KEY)
+    client = genai.Client(
+        api_key=settings.GOOGLE_API_KEY,
+        http_options={"api_version": "v1"},
+    )
+    embedding_model = getattr(settings, "GOOGLE_EMBEDDING_MODEL", "text-embedding-004")
 
     try:
         user = User.objects.get(id=user_id)
@@ -64,7 +69,7 @@ def update_user_embedding(self, user_id):
             return
 
         result = client.models.embed_content(
-            model="text-embedding-004",
+            model=embedding_model,
             contents=profile_text,
             config={"task_type": "RETRIEVAL_DOCUMENT"},
         )
@@ -83,6 +88,13 @@ def update_user_embedding(self, user_id):
     except User.DoesNotExist:
         print(f"User {user_id} does not exist")
 
+    except APIError as e:
+        # 404 typically means the model is not available for this API version.
+        if getattr(e, "code", None) == 404:
+            print(f"Error embedding profile (model not found): {e}")
+            return
+        print(f"Error embedding profile: {e}")
+        raise
     except Exception as e:
         print(f"Error embedding profile: {e}")
         raise
