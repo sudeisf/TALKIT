@@ -3,6 +3,18 @@ from .models import Question, QuestionVote
 from users.models import Tag  # Assuming you have a Tag model
 from notifications.models import Notification
 from celery import chain
+from cloudinary.utils import cloudinary_url
+
+
+def _profile_image_url(user):
+    if not user:
+        return None
+    image_field = getattr(user, "profile_image", None)
+    public_id = getattr(image_field, "public_id", None)
+    if public_id:
+        secure_url, _ = cloudinary_url(public_id, secure=True)
+        return secure_url
+    return getattr(image_field, "url", None) or None
 
 class QuestionSerializer(serializers.ModelSerializer):
    
@@ -133,6 +145,10 @@ class HelperProfileOverviewSerializer(serializers.Serializer):
     
 class QuestionListSerializer(serializers.ModelSerializer):
     asked_by_username = serializers.CharField(source='asked_by.username', read_only=True)
+    asked_by_name = serializers.SerializerMethodField()
+    asked_by_profile_image_url = serializers.SerializerMethodField()
+    participants_preview = serializers.SerializerMethodField()
+    participants_extra_count = serializers.SerializerMethodField()
     is_full = serializers.SerializerMethodField()
     am_i_joined = serializers.SerializerMethodField()
     has_summary = serializers.SerializerMethodField()
@@ -144,13 +160,55 @@ class QuestionListSerializer(serializers.ModelSerializer):
         model = Question
         fields = [
             'id', 'title', 'description', 'status', 'bounty_points', 
-            'created_at', 'asked_by_username', 'is_full', 
+            'created_at', 'asked_by_username', 'asked_by_name',
+            'asked_by_profile_image_url', 'participants_preview', 'participants_extra_count',
+            'is_full', 
             'am_i_joined', 'has_summary', 'participant_count', 'tags',
             'upvotes', 'downvotes', 'my_vote'
         ]
 
     def get_tags(self, obj):
         return list(obj.tags.values_list('name', flat=True))
+
+    def get_asked_by_name(self, obj):
+        first = getattr(obj.asked_by, 'first_name', '') or ''
+        last = getattr(obj.asked_by, 'last_name', '') or ''
+        full = f"{first} {last}".strip()
+        return full or getattr(obj.asked_by, 'username', None)
+
+    def get_asked_by_profile_image_url(self, obj):
+        return _profile_image_url(obj.asked_by)
+
+    def _collect_participants(self, obj):
+        users = []
+        seen = set()
+        asked_by = obj.asked_by
+        if asked_by and asked_by.id not in seen:
+            users.append(asked_by)
+            seen.add(asked_by.id)
+        if hasattr(obj, 'chat_session'):
+            for user in obj.chat_session.participants.all():
+                if user.id not in seen:
+                    users.append(user)
+                    seen.add(user.id)
+        return users
+
+    def get_participants_preview(self, obj):
+        users = self._collect_participants(obj)
+        preview = users[:3]
+        return [
+            {
+                "id": user.id,
+                "name": (f"{user.first_name or ''} {user.last_name or ''}".strip() or user.username),
+                "avatar": _profile_image_url(user),
+            }
+            for user in preview
+        ]
+
+    def get_participants_extra_count(self, obj):
+        users = self._collect_participants(obj)
+        extra = len(users) - 3
+        return extra if extra > 0 else 0
 
     def get_is_full(self, obj):
         # Check if the associated chat session is at capacity

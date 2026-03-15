@@ -741,7 +741,12 @@ class ToggleBookmarkView(APIView):
 		return Response({"is_favorite": True}, status=status.HTTP_200_OK)
     
 class PublicQuestionListView(generics.ListAPIView):
-    queryset = Question.objects.all().order_by('-created_at')
+    queryset = (
+        Question.objects
+        .select_related('asked_by')
+        .prefetch_related('tags', 'chat_session__participants')
+        .order_by('-created_at')
+    )
     serializer_class = QuestionListSerializer
     permission_classes = [permissions.AllowAny]
 

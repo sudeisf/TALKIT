@@ -101,8 +101,14 @@ export default function QuestionsPage() {
             : question.my_vote === 'DOWN'
               ? ('down' as const)
               : null,
+        contributors: (question.participants_preview || []).map((participant) => ({
+          name: participant.name,
+          avatar: participant.avatar || undefined,
+        })),
+        additionalContributors: question.participants_extra_count || 0,
         user: {
-          name: question.asked_by_username || 'Learner',
+          name: question.asked_by_name || question.asked_by_username || 'Learner',
+          avatar: question.asked_by_profile_image_url || undefined,
         },
       } as const;
     });
@@ -176,7 +182,7 @@ export default function QuestionsPage() {
   }, [recentActivity]);
 
   const timelineQuestions = useMemo(
-    () => allTimelineQuestions.slice(0, 8),
+    () => allTimelineQuestions.slice(0, 3),
     [allTimelineQuestions]
   );
 

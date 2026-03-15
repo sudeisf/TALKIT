@@ -109,42 +109,44 @@ export function RecentQuestionsTimeline({
         )}
       </div>
 
-      <div className="mt-6 pt-4 border-t border-border">
-        <Dialog>
-          <DialogTrigger asChild>
-            <button className="text-sm text-white hover:underline">
-              View all activity →
-            </button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>All Activities</DialogTitle>
-              <DialogDescription>
-                Complete timeline of your recent question-related activities.
-              </DialogDescription>
-            </DialogHeader>
+      {modalQuestions.length > questions.length && (
+        <div className="mt-6 pt-4 border-t border-border">
+          <Dialog>
+            <DialogTrigger asChild>
+              <button className="text-sm text-white hover:underline">
+                View all activity →
+              </button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>All Activities</DialogTitle>
+                <DialogDescription>
+                  Complete timeline of your recent question-related activities.
+                </DialogDescription>
+              </DialogHeader>
 
-            <ScrollArea className="max-h-[65vh] pr-3">
-              <div className="space-y-4">
-                {modalQuestions.length > 0 ? (
-                  modalQuestions.map((question, index) =>
-                    renderActivityItem(
-                      question,
-                      index,
-                      index === modalQuestions.length - 1,
-                      true
+              <ScrollArea className="max-h-[65vh] pr-3">
+                <div className="space-y-4">
+                  {modalQuestions.length > 0 ? (
+                    modalQuestions.map((question, index) =>
+                      renderActivityItem(
+                        question,
+                        index,
+                        index === modalQuestions.length - 1,
+                        true
+                      )
                     )
-                  )
-                ) : (
-                  <p className="text-sm text-muted-foreground py-4">
-                    No activity found yet.
-                  </p>
-                )}
-              </div>
-            </ScrollArea>
-          </DialogContent>
-        </Dialog>
-      </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground py-4">
+                      No activity found yet.
+                    </p>
+                  )}
+                </div>
+              </ScrollArea>
+            </DialogContent>
+          </Dialog>
+        </div>
+      )}
     </div>
   );
 }

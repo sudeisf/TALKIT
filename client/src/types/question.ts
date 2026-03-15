@@ -85,6 +85,14 @@ export interface QuestionFeedItem {
   bounty_points: number;
   created_at: string;
   asked_by_username: string;
+  asked_by_name?: string | null;
+  asked_by_profile_image_url?: string | null;
+  participants_preview?: Array<{
+    id: number;
+    name: string;
+    avatar?: string | null;
+  }>;
+  participants_extra_count?: number;
   is_full: boolean;
   am_i_joined: boolean;
   has_summary: boolean;

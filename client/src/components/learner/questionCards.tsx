@@ -84,6 +84,19 @@ export function QuestionCard({
   onUpvote,
   onDownvote,
 }: QuestionCardProps) {
+  const normalizeAvatarUrl = (url?: string | null) => {
+    if (!url) return undefined;
+    if (/^https?:\/\//i.test(url)) {
+      return url.replace(/^http:\/\//i, 'https://');
+    }
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    try {
+      const parsed = new URL(apiUrl);
+      return `${parsed.origin}${url.startsWith('/') ? url : `/${url}`}`;
+    } catch {
+      return url;
+    }
+  };
   const [bookmarked, setBookmarked] = useState(isBookmarked);
   const [currentVote, setCurrentVote] = useState<'up' | 'down' | null>(
     userVote
@@ -278,7 +291,7 @@ export function QuestionCard({
                 >
                   <Avatar className="w-6 h-6 rounded-full ring-2 ring-white dark:ring-gray-800 border">
                     {contributor.avatar ? (
-                      <AvatarImage src={contributor.avatar} alt={contributor.name} loading="lazy" />
+                      <AvatarImage src={normalizeAvatarUrl(contributor.avatar)} alt={contributor.name} loading="lazy" />
                     ) : (
                       <AvatarFallback>{contributor.name.charAt(0).toUpperCase()}</AvatarFallback>
                     )}
@@ -303,7 +316,7 @@ export function QuestionCard({
 
           <Avatar className="w-8 h-8 rounded-full ring-2 ring-white dark:ring-gray-800 border">
             {user.avatar ? (
-              <AvatarImage src={user.avatar} alt={user.name} loading="lazy" />
+              <AvatarImage src={normalizeAvatarUrl(user.avatar)} alt={user.name} loading="lazy" />
             ) : null}
             <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
           </Avatar>
