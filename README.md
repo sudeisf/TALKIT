@@ -209,6 +209,17 @@ python manage.py runserver
 
 Backend runs at: http://127.0.0.1:8000
 
+### Run backend with Uvicorn (ASGI)
+
+If you want to run the Django ASGI app with Uvicorn instead of `runserver`:
+
+```bash
+pip install uvicorn
+uvicorn config.asgi:application --host 0.0.0.0 --port 8000 --reload
+```
+
+Then open: http://127.0.0.1:8000
+
 ### 2) Frontend setup
 
 From `client`:
