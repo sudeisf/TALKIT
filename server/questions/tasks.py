@@ -1,5 +1,5 @@
 from celery import shared_task
-from google import genai
+import google.generativeai as genai
 from django.conf import settings
 from .models import Question, QuestionInvite, SolutionSummary
 from users.models import User

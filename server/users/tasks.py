@@ -41,7 +41,7 @@ def update_user_embedding(self, user_id):
     if not getattr(settings, "GOOGLE_API_KEY", None):
         return
 
-    from google import genai
+    import google.genai as genai
     from google.genai.errors import APIError
 
     client = genai.Client(

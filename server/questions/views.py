@@ -15,7 +15,7 @@ from rest_framework.views import APIView
 from urllib3 import request
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
-from google import genai
+import google.genai as genai
 
 from .serializers import (
 	ModifyQuestionDescriptionSerializer,

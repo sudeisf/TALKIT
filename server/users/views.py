@@ -14,7 +14,6 @@ from .models import Otp
 from .services import send_OTP_To_Email
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from drf_yasg.utils import swagger_auto_schema
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from django.conf import settings
@@ -118,12 +117,6 @@ class LogoutView(APIView):
 @method_decorator(csrf_exempt,name='dispatch')    
 class EmailVerificationView(APIView):
       permission_classes = [AllowAny]
-      @swagger_auto_schema(
-        operation_description="Send OTP to email for verification",
-        request_body=EmailVerifySerilizer,
-        responses={200: "OTP sent successfully"}
-      )
-      
       def post(self,request):
             serializer = EmailVerifySerilizer(data=request.data)
             if serializer.is_valid():
