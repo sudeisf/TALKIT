@@ -15,25 +15,34 @@ export default function SummaryCard({
   title,
   value,
   icon,
-  color = 'text-blue-600',
+  color = 'text-primary',
   percentage,
 }: SummaryCardProps) {
+  const iconBgClass = color.includes('text-success')
+    ? 'bg-success/10'
+    : color.includes('text-warning')
+      ? 'bg-warning/10'
+      : color.includes('text-danger')
+        ? 'bg-danger/10'
+        : color.includes('text-info')
+          ? 'bg-info/10'
+          : 'bg-accent';
   const isPositive = percentage > 0;
   const isNegative = percentage < 0;
   const trendColorClass = isPositive
-    ? 'text-green-600'
+    ? 'text-success'
     : isNegative
-      ? 'text-red-600'
+      ? 'text-danger'
       : 'text-muted-foreground';
   const trendBgClass = isPositive
-    ? 'bg-green-500/10'
+    ? 'bg-success/10'
     : isNegative
-      ? 'bg-red-500/10'
+      ? 'bg-danger/10'
       : 'bg-muted';
 
   return (
     <div className="flex min-h-24 items-center border border-border p-4 gap-3 bg-card rounded-md">
-      <div className={`p-2 rounded-full bg-muted h-fit ${color}`}>
+      <div className={`p-2 rounded-full h-fit ${iconBgClass} ${color}`}>
         {icon}
       </div>
       <div className="space-y-1 min-w-0">

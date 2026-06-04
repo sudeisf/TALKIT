@@ -34,9 +34,9 @@ export function RecentQuestionsTimeline({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'ongoing':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+        return 'bg-info/10 text-info border-info/20';
       case 'answered':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+        return 'bg-success/10 text-success dark:bg-success/15 dark:text-success';
       case 'closed':
         return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
       default:
@@ -57,7 +57,7 @@ export function RecentQuestionsTimeline({
         />
       )}
 
-      <div className="absolute left-2 top-2 w-4 h-4 bg-[#03624C] rounded-full border-2 border-background" />
+      <div className="absolute left-2 top-2 w-4 h-4 bg-primary rounded-full border-2 border-background" />
 
       <div className="ml-8 pb-4">
         <div className="flex items-center gap-2 mb-2">
@@ -66,7 +66,7 @@ export function RecentQuestionsTimeline({
           >
             {question.status}
           </span>
-          <div className={`flex items-center text-xs ${isModal ? 'text-muted-foreground' : 'text-white'}`}>
+          <div className={`flex items-center text-xs ${isModal ? 'text-muted-foreground' : 'text-primary-foreground'}`}>
             <Clock className="w-3 h-3 mr-1" />
             {question.timeAgo}
           </div>
@@ -74,13 +74,13 @@ export function RecentQuestionsTimeline({
 
         <h4
           className={`text-sm font-medium leading-tight mb-3 transition-colors ${
-            isModal ? 'text-foreground hover:text-[#03624C]' : 'text-white hover:text-primary'
+            isModal ? 'text-foreground hover:text-primary' : 'text-primary-foreground hover:text-primary'
           }`}
         >
           {question.title}
         </h4>
 
-        <div className={`flex items-center gap-4 text-xs ${isModal ? 'text-muted-foreground' : 'text-white'}`}>
+        <div className={`flex items-center gap-4 text-xs ${isModal ? 'text-muted-foreground' : 'text-primary-foreground'}`}>
           <div className="flex items-center">
             <MessageCircle className="w-3 h-3 mr-1" />
             {question.answerCount} answers
@@ -95,10 +95,10 @@ export function RecentQuestionsTimeline({
   );
 
   return (
-    <div className="w-full bg-[#03624C]/90  border-l rounded-md shadow-sm  border-border p-6">
+    <div className="w-full bg-primary/90  border-l rounded-md shadow-sm  border-border p-6">
       <div className="mb-6">
-        <h3 className="text-lg text-white font-semibold mb-2">Recent Activity</h3>
-        <p className="text-sm text-white">
+        <h3 className="text-lg text-primary-foreground font-semibold mb-2">Recent Activity</h3>
+        <p className="text-sm text-primary-foreground">
           Latest questions and updates
         </p>
       </div>
@@ -113,7 +113,7 @@ export function RecentQuestionsTimeline({
         <div className="mt-6 pt-4 border-t border-border">
           <Dialog>
             <DialogTrigger asChild>
-              <button className="text-sm text-white hover:underline">
+              <button className="text-sm text-primary-foreground hover:underline">
                 View all activity →
               </button>
             </DialogTrigger>

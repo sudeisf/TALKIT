@@ -70,8 +70,8 @@ export default function GitHubCallback() {
       <div className="flex items-center justify-center h-[60vh]">
         <SpinnerInfinity
           thickness={100}
-          secondaryColor="#f0f0f0"
-          color="#EA580C"
+          secondaryColor="var(--muted)"
+          color="var(--primary)"
           size={90}
         />
       </div>

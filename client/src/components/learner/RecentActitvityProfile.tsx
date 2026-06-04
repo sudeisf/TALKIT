@@ -21,9 +21,9 @@ export function RecentQuestionsTimelineProfile({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'ongoing':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+        return 'bg-info/10 text-info border-info/20';
       case 'answered':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+        return 'bg-success/10 text-success dark:bg-success/15 dark:text-success';
       case 'closed':
         return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
       default:

@@ -17,6 +17,8 @@ import { useChatSessionDetailQuery } from '@/query/questionMutation';
 import api from '@/lib/api/axiosInstance';
 import type { ChatSessionParticipantItem } from '@/types/question';
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { SkeletonChatMessage } from '@/components/ui/skeleton';
+import { useMinimumLoading } from '@/hooks/use-minimum-loading';
 
 const STATUS_LABEL_ONLINE = 'ONLINE';
 const STATUS_LABEL_OFFLINE = 'OFFLINE';
@@ -71,7 +73,7 @@ const renderLinkedText = (text: string) => {
           href={href}
           target="_blank"
           rel="noreferrer"
-          className="text-[#03624C] underline underline-offset-2"
+          className="text-primary underline underline-offset-2"
         >
           {part}
         </a>
@@ -115,6 +117,7 @@ export default function sessionBox() {
     isLoading: isSessionLoading,
     isError: isSessionError,
   } = useChatSessionDetailQuery(sessionId);
+  const showThreadSkeleton = useMinimumLoading(isSessionLoading);
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', {
@@ -282,11 +285,6 @@ export default function sessionBox() {
 
   return (
     <div className="flex min-h-0 rounded-lg border border-border mt-4 mx-4 shadow-xs flex-col h-[calc(100vh-100px)] bg-background">
-      {isSessionLoading && (
-        <div className="p-4 text-sm text-muted-foreground border-b border-border">
-          Loading session...
-        </div>
-      )}
       {isSessionError && (
         <div className="p-4 text-sm text-red-500 border-b border-border">
           Could not load this session.
@@ -356,7 +354,7 @@ export default function sessionBox() {
                       </div>
                       <ScrollArea className="mt-4 h-[70vh] pr-3">
                         <div className="mb-4 text-xs font-semibold text-muted-foreground flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                          <span className="h-2 w-2 rounded-full bg-success" />
                           {STATUS_LABEL_ONLINE}
                         </div>
                         <div className="grid gap-3">
@@ -424,7 +422,13 @@ export default function sessionBox() {
           className="flex-1 min-h-0 p-4 space-y-4 bg-muted/30"
           style={{ scrollBehavior: 'smooth' }}
         >
-          {sessionDetail?.description && (
+          {showThreadSkeleton ? (
+            <div className="space-y-5">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <SkeletonChatMessage key={index} sent={index % 3 === 1} />
+              ))}
+            </div>
+          ) : sessionDetail?.description && (
             <div className="bg-card border border-border rounded-lg p-4 mb-6">
               <div className="flex items-start gap-3">
                 {owner ? (
@@ -435,8 +439,8 @@ export default function sessionBox() {
                     </AvatarFallback>
                   </Avatar>
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-[#03624C] flex items-center justify-center flex-shrink-0">
-                    <BookOpen className="h-4 w-4 text-white" />
+                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                    <BookOpen className="h-4 w-4 text-primary-foreground" />
                   </div>
                 )}
                 <div>
@@ -451,12 +455,13 @@ export default function sessionBox() {
             </div>
           )}
 
-          {/* Messages list as its own component */}
-          <MessageList
-            messages={messages}
-            formatTime={formatTime}
-            messagesEndRef={messagesEndRef}
-          />
+          {!showThreadSkeleton && (
+            <MessageList
+              messages={messages}
+              formatTime={formatTime}
+              messagesEndRef={messagesEndRef}
+            />
+          )}
         </div>
       </ScrollArea>
 
@@ -532,7 +537,7 @@ function ChatMessageRow({
               className={cn(
                 'rounded-lg px-4 py-2 max-w-md break-words',
                 message.sender === 'user'
-                  ? 'bg-[#03624C] text-white'
+                  ? 'bg-primary text-primary-foreground'
                   : 'bg-card text-foreground border border-border'
               )}
             >
@@ -651,7 +656,7 @@ function VoiceMessageBubble({
         {/* play button */}
         <button
           onClick={togglePlayback}
-          className="w-8 h-8 rounded-full flex items-center justify-center bg-black text-white mr-3 flex-shrink-0"
+          className="w-8 h-8 rounded-full flex items-center justify-center bg-black text-primary-foreground mr-3 flex-shrink-0"
           aria-label={isPlaying ? 'Pause voice message' : 'Play voice message'}
         >
           {isPlaying ? (
@@ -675,7 +680,7 @@ function VoiceMessageBubble({
           <div className="w-full h-full flex items-center justify-between">
             {barPattern.map((v, idx) => {
               const played = idx / barPattern.length < progress;
-              const color = played ? '#000000' : '#d4d4d8'; // black / gray-300
+              const color = played ? 'var(--primary)' : 'var(--muted-foreground)';
               const heightPct = 25 + v * 65; // 25–90%
 
               return (

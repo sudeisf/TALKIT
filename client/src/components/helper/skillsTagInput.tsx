@@ -95,13 +95,13 @@ export const SkillsInput: React.FC<SkillsInputProps> = ({ value, onChange }) => 
           {value.map((skill) => (
             <div
               key={skill}
-              className="flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium"
+              className="flex items-center gap-1 bg-info/10 text-info px-3 py-1 rounded-full text-sm font-medium"
             >
               <span>{skill}</span>
               <button
                 type="button"
                 onClick={() => removeSkill(skill)}
-                className="text-blue-600 hover:text-blue-800 transition-colors"
+                className="text-primary hover:text-info transition-colors"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -130,7 +130,7 @@ export const SkillsInput: React.FC<SkillsInputProps> = ({ value, onChange }) => 
             type="button"
             onClick={() => addSkill(inputValue)}
             disabled={!inputValue.trim()}
-            className="bg-[#03624C] text-white rounded-sm hover:bg-[#03624C]/90 disabled:bg-gray-400"
+            className="bg-primary text-primary-foreground rounded-sm hover:bg-primary/90 disabled:bg-gray-400"
           >
             <Plus className="w-4 h-4 mr-1" />
             Add

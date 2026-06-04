@@ -205,9 +205,9 @@ export default function Navbar() {
             src={Logo}
             className="w-7 h-7 dark:brightness-0 dark:invert"
           />
-          {/* <p className="font-plus-jakarta capitalize text-xs ">Talkit</p> */}
+          {/* <p className="font-sans capitalize text-xs ">Talkit</p> */}
         </div>
-        <div className="flex gap-4 px-2 font-main capitalize text-[.92rem] items-center text-muted-foreground">
+        <div className="flex gap-4 px-2 font-sans capitalize text-[.92rem] items-center text-muted-foreground">
           {Pages.map((page, index) => (
             <Link
               key={`dash-${index}`}
@@ -302,7 +302,7 @@ export default function Navbar() {
           <Link href={'/helper-notfications'} className="relative">
             <Bell className="w-5 h-5 text-muted-foreground transition-colors hover:text-foreground" />
             {unreadCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] rounded-full h-4 min-w-4 px-1 flex items-center justify-center leading-none">
+              <span className="absolute -top-2 -right-2 bg-red-500 text-primary-foreground text-[10px] rounded-full h-4 min-w-4 px-1 flex items-center justify-center leading-none">
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}

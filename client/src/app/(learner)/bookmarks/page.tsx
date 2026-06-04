@@ -95,7 +95,7 @@ export default function BookmarksPage() {
         </div>
         <Badge
           variant="outline"
-          className=" text-orange-700 text-sm p-2 rounded-full capitalize"
+          className=" text-warning text-sm p-2 rounded-full capitalize"
         >
           {bookmarkedData.flatMap((section) => section.topics).length} bookmarks
         </Badge>
@@ -176,10 +176,10 @@ export default function BookmarksPage() {
                                   variant="outline"
                                   className={`text-xs ${
                                     topic.category === 'question'
-                                      ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                      ? 'bg-info/10 text-info border-info/20'
                                       : topic.category === 'tutorial'
-                                        ? 'bg-green-50 text-green-700 border-green-200'
-                                        : 'bg-purple-50 text-purple-700 border-purple-200'
+                                        ? 'bg-green-50 text-green-700 border-success/20'
+                                        : 'bg-info/10 text-info border-info/20'
                                   }`}
                                 >
                                   {topic.category}

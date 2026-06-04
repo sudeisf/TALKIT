@@ -49,12 +49,12 @@ interface QuestionCardProps {
 const statusConfig = {
   ongoing: {
     label: 'Ongoing',
-    className: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+    className: 'bg-info/10 text-info border-info/20',
   },
   answered: {
     label: 'Answered',
     className:
-      'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+      'bg-success/10 text-success dark:bg-success/15 dark:text-success',
   },
   closed: {
     label: 'Closed',
@@ -160,8 +160,8 @@ export function QuestionCard({
               className={cn(
                 'p-1 h-auto hover:bg-transparent',
                 currentVote === 'up'
-                  ? 'text-[#03624C]'
-                  : 'text-gray-400 hover:text-[#03624C] dark:text-gray-500 dark:hover:text-orange-400'
+                  ? 'text-primary'
+                  : 'text-gray-400 hover:text-primary dark:text-gray-500 dark:hover:text-primary/80'
               )}
               onClick={handleUpvote}
             >
@@ -172,9 +172,9 @@ export function QuestionCard({
               className={cn(
                 'text-xs font-bold px-1 py-0.5 min-w-[24px] text-center',
                 voteCount > 0
-                  ? 'text-[#03624C]'
+                  ? 'text-primary'
                   : voteCount < 0
-                    ? 'text-blue-500'
+                    ? 'text-primary'
                     : 'text-gray-500 dark:text-gray-400'
               )}
             >
@@ -187,8 +187,8 @@ export function QuestionCard({
               className={cn(
                 'p-1 h-auto hover:bg-transparent',
                 currentVote === 'down'
-                  ? 'text-[#03624C]'
-                  : 'text-gray-400 hover:text-[#03624C] dark:text-gray-500 dark:hover:text-[#03624C]'
+                  ? 'text-primary'
+                  : 'text-gray-400 hover:text-primary dark:text-gray-500 dark:hover:text-primary'
               )}
               onClick={handleDownvote}
             >
@@ -198,7 +198,7 @@ export function QuestionCard({
 
           <div className="flex-1 min-w-0">
             <h3
-              className="font-medium font-sans text-lg leading-tight cursor-pointer hover:text-[#03624C] dark:hover:text-blue-400 transition-colors line-clamp-2"
+              className="font-medium font-sans text-lg leading-tight cursor-pointer hover:text-primary dark:hover:text-primary/80 transition-colors line-clamp-2"
               onClick={handleTitleClick}
             >
               {title}
@@ -233,7 +233,7 @@ export function QuestionCard({
               className={cn(
                 'h-4 w-4 transition-colors',
                 bookmarked
-                  ? 'fill-[#03624C] text-[#03624C]'
+                  ? 'fill-primary text-primary'
                   : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'
               )}
             />
@@ -270,7 +270,7 @@ export function QuestionCard({
           <Link
             href={'/'}
             onClick={handleContinueClick}
-            className="shrink-0 flex text-sm items-center gap-2 hover:text-[#03624C]"
+            className="shrink-0 flex text-sm items-center gap-2 hover:text-primary"
           >
             Continue <ArrowRight className="w-4 h-4" />
           </Link>

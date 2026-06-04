@@ -135,7 +135,7 @@ export default function AskQuestion({ btnChild }: ASkQuestionProps) {
       <DialogTrigger asChild>{btnChild}</DialogTrigger>
       <DialogContent className="sm:max-w-[650px] rounded-xl shadow-lg p-6">
         <DialogHeader>
-          <DialogTitle className="text-xl font-medium text-[#03624c] font-pt">
+          <DialogTitle className="text-xl font-medium text-primary font-sans">
             Ask a Question
           </DialogTitle>
         </DialogHeader>
@@ -152,7 +152,7 @@ export default function AskQuestion({ btnChild }: ASkQuestionProps) {
                   <FormControl>
                     <Input
                       placeholder="e.g. How do I optimize my React app?"
-                      className="rounded-lg border-gray-300 focus:ring-2 focus:ring-orange-400"
+                      className="rounded-lg border-gray-300 focus:ring-2 focus-visible:ring-primary/30"
                       {...field}
                     />
                   </FormControl>
@@ -214,7 +214,7 @@ export default function AskQuestion({ btnChild }: ASkQuestionProps) {
                   <FormControl>
                     <Textarea
                       placeholder="Explain your question in detail..."
-                      className="resize-none min-h-[120px] rounded-lg border-gray-300 focus:ring-2 focus:ring-[#03624c]"
+                      className="resize-none min-h-[120px] rounded-lg border-gray-300 focus:ring-2 focus-visible:ring-primary/30"
                       {...field}
                     />
                   </FormControl>
@@ -242,7 +242,7 @@ export default function AskQuestion({ btnChild }: ASkQuestionProps) {
               </Button>
               <Button
                 type="submit"
-                className="bg-[#03624c] hover:bg-[#03624c] text-white rounded-lg"
+                className="bg-primary hover:bg-primary text-primary-foreground rounded-lg"
                 disabled={form.formState.isSubmitting || createQuestionMutation.isPending}
               >
                 {form.formState.isSubmitting || createQuestionMutation.isPending

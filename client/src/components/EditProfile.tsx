@@ -184,7 +184,7 @@ export function EditProfile() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger className="bg-gradient-to-r text-sm font-pt bg-[#03624C] px-4 text-white rounded-full mt-2 shadow-xs">
+      <DialogTrigger className="bg-gradient-to-r text-sm font-sans bg-primary px-4 text-primary-foreground rounded-full mt-2 shadow-xs">
         Edit Profile
       </DialogTrigger>
       <DialogContent className="sm:max-w-4xl">
@@ -320,7 +320,7 @@ export function EditProfile() {
               <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isSaving}>
                 Cancel
               </Button>
-              <Button type="submit" className="rounded-sm bg-[#03624C]" disabled={isSaving}>
+              <Button type="submit" className="rounded-sm bg-primary" disabled={isSaving}>
                 {isSaving ? 'Saving...' : 'Update Information'}
               </Button>
             </div>

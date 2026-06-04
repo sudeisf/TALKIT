@@ -31,7 +31,7 @@ export default function SettingsPage() {
         <Card className="shadow-none border-b border-x-0 border-t-0 rounded-none">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5 text-blue-600" />
+              <User className="h-5 w-5 text-primary" />
               Account Settings
             </CardTitle>
           </CardHeader>
@@ -54,7 +54,7 @@ export default function SettingsPage() {
         <Card className="shadow-none border-b border-x-0 border-t-0 rounded-none">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5 text-orange-600" />
+              <Bell className="h-5 w-5 text-warning" />
               Notification Preferences
             </CardTitle>
           </CardHeader>

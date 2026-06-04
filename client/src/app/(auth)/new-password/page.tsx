@@ -59,8 +59,8 @@ export default function NewPassword() {
         dispatch(action.clearEmail());
         toast.success(data.message, {
           style: {
-            background: 'linear-gradient(to right, #f12711, #f5af19)',
-            color: '#fff',
+            background: 'linear-gradient(to right, var(--danger), var(--warning))',
+            color: 'var(--primary-foreground)',
             fontWeight: 'bold',
             fontSize: '16px',
             borderRadius: '8px',
@@ -95,15 +95,15 @@ export default function NewPassword() {
         <div className="flex items-center justify-center h-[80vh]">
           <SpinnerInfinity
             thickness={100}
-            secondaryColor="#f0f0f0"
-            color="#EA580C"
+            secondaryColor="var(--muted)"
+            color="var(--primary)"
             size={90}
           />
         </div>
       ) : (
         <div>
           <div className="flex justify-between p-4">
-            <h1 className="bg-gradient-to-r from-[#03624C] to-[#03624C]/80 bg-clip-text text-transparent text-xl">
+            <h1 className="bg-primary bg-clip-text text-transparent text-xl">
               Talkit
             </h1>
             <div className="flex space-x-0.5 text-md"></div>
@@ -118,7 +118,7 @@ export default function NewPassword() {
               </p>
             </div>
             {globalError && (
-              <div className="text-red-600 text-sm font-medium   form-sans text-center mt-4">
+              <div className="text-danger text-sm font-medium   form-sans text-center mt-4">
                 {globalError}
               </div>
             )}
@@ -166,7 +166,7 @@ export default function NewPassword() {
 
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-[#03624C] to-[#03624C]/80 py-5 text-sm "
+                  className="w-full bg-primary py-5 text-sm "
                 >
                   Confirm
                   <ArrowRight />

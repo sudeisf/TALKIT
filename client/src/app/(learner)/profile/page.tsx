@@ -24,6 +24,8 @@ import {
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { getCurrentUser } from '@/lib/api/authApi';
+import { SkeletonListItem, SkeletonProfileHeader } from '@/components/ui/skeleton';
+import { useMinimumLoading } from '@/hooks/use-minimum-loading';
 
 const userInfo = {
   name: 'User',
@@ -77,6 +79,8 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null);
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
+  const showSkeleton = useMinimumLoading(isProfileLoading);
 
   useEffect(() => {
     getCurrentUser()
@@ -87,6 +91,9 @@ export default function ProfilePage() {
       })
       .catch((error) => {
         console.error(error?.response?.data || error);
+      })
+      .finally(() => {
+        setIsProfileLoading(false);
       });
 
     const onProfileUpdated = (event: Event) => {
@@ -129,6 +136,15 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-6xl mx-auto p-4 mb-4 text-foreground">
+      {showSkeleton ? (
+        <div className="space-y-4">
+          <SkeletonProfileHeader />
+          {Array.from({ length: 4 }).map((_, index) => (
+            <SkeletonListItem key={index} />
+          ))}
+        </div>
+      ) : (
+      <>
       {/* cover image section */}
       <div className="relative h-[200px]  ">
         <div className="w-full h-full ">
@@ -145,7 +161,7 @@ export default function ProfilePage() {
               </div>
             </div>
           ) : (
-            <div className="w-full h-full rounded-t-md bg-[#03624C] flex justify-end p-4">
+            <div className="w-full h-full rounded-t-md bg-primary flex justify-end p-4">
             <UploadCoverImage onUploaded={setCoverImage} />
           </div>
           )}
@@ -163,7 +179,7 @@ export default function ProfilePage() {
 
           <div className="flex justify-between">
             <div className="pt-5  space-y-2">
-              <h1 className="text-2xl font-pt font-bold">{displayName}</h1>
+              <h1 className="text-2xl font-sans font-bold">{displayName}</h1>
               <p className="text-md text-muted-foreground">{displayRole}</p>
               <p className="text-md text-muted-foreground">{displayLocation}</p>
               <div>
@@ -179,7 +195,7 @@ export default function ProfilePage() {
                 <Link href={'/settings'}>
                   <Button
                     variant={'outline'}
-                    className="border-[#03624C] border p-5 text-md text-[#03624C] rounded-full mt-2 shadow-xs "
+                    className="border-primary border p-5 text-md text-primary rounded-full mt-2 shadow-xs "
                   >
                     Settings
                   </Button>
@@ -188,10 +204,10 @@ export default function ProfilePage() {
             </div>
             <div className="flex flex-col gap-2 justify-between">
               <div className="flex flex-col items-end gap-2">
-                <h1 className="font-pt text-md flex text-muted-foreground gap-2 w-fit">
+                <h1 className="font-sans text-md flex text-muted-foreground gap-2 w-fit">
                   Current role <Briefcase className="w-4 h-4" />
                 </h1>
-                <h2 className="rounded-full bg-muted text-foreground text-sm p-2 font-pt capitalize font-medium px-2">
+                <h2 className="rounded-full bg-muted text-foreground text-sm p-2 font-sans capitalize font-medium px-2">
                   {currentRole}
                 </h2>
               </div>
@@ -203,7 +219,7 @@ export default function ProfilePage() {
                   {displaySkills.length > 0 ? (
                     displaySkills.map((skill: string, index: number) => (
                       <div key={index}>
-                        <p className="bg-muted text-foreground p-2 text-sm w-fit rounded-full font-pt font-medium">
+                        <p className="bg-muted text-foreground p-2 text-sm w-fit rounded-full font-sans font-medium">
                           {skill}
                         </p>
                       </div>
@@ -221,7 +237,7 @@ export default function ProfilePage() {
           {/*<Card className="shadow-none rounded-xl border-0 bg-white/95 p-2 ">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-orange-600" />
+                  <Target className="h-5 w-5 text-warning" />
                   Level Progress
                 </CardTitle>
               </CardHeader>
@@ -249,7 +265,7 @@ export default function ProfilePage() {
             <Card className="shadow-xs border border-border rounded-xl bg-card hover:shadow-xl transition-shadow">
               <CardContent className="p-6 text-center">
                 <div className="flex flex-col items-center">
-                  <BookOpen className="h-8 w-8 text-blue-600 mb-2" />
+                  <BookOpen className="h-8 w-8 text-primary mb-2" />
                   <h3 className="text-2xl font-bold text-foreground">
                     {userInfo.totalQuestions}
                   </h3>
@@ -261,7 +277,7 @@ export default function ProfilePage() {
             <Card className="shadow-xs border border-border rounded-xl bg-card hover:shadow-xl transition-shadow">
               <CardContent className="p-6 text-center">
                 <div className="flex flex-col items-center">
-                  <User className="h-8 w-8 text-green-600 mb-2" />
+                  <User className="h-8 w-8 text-success mb-2" />
                   <h3 className="text-2xl font-bold text-foreground">
                     {userInfo.sessionsJoined || 24}
                   </h3>
@@ -273,7 +289,7 @@ export default function ProfilePage() {
             <Card className="shadow-xs border border-border rounded-xl bg-card hover:shadow-xl transition-shadow">
               <CardContent className="p-6 text-center">
                 <div className="flex flex-col items-center">
-                  <Clock className="h-8 w-8 text-orange-600 mb-2" />
+                  <Clock className="h-8 w-8 text-warning mb-2" />
                   <h3 className="text-2xl font-bold text-foreground">
                     {userInfo.ongoingSessions || 3}
                   </h3>
@@ -285,7 +301,7 @@ export default function ProfilePage() {
             <Card className="shadow-xs border border-border rounded-xl bg-card hover:shadow-xl transition-shadow">
               <CardContent className="p-6 text-center">
                 <div className="flex flex-col items-center">
-                  <Bookmark className="h-8 w-8 text-purple-600 mb-2" />
+                  <Bookmark className="h-8 w-8 text-info mb-2" />
                   <h3 className="text-2xl font-bold text-foreground">
                     {userInfo.bookmarksSaved || 18}
                   </h3>

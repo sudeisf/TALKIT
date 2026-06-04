@@ -4,6 +4,8 @@ import { ArrowRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useMyQuestionsQuery } from '@/query/questionMutation';
 import { useRouter } from 'next/navigation';
+import { SkeletonListItem } from '@/components/ui/skeleton';
+import { useMinimumLoading } from '@/hooks/use-minimum-loading';
 
 interface AskedTopic {
   id: number;
@@ -19,6 +21,7 @@ const DEFAULT_VISIBLE_ITEMS = 3;
 export default function AskedTopicsTimeline() {
   const [isOpen, setIsOpen] = useState(false);
   const { data: myQuestions = [], isLoading } = useMyQuestionsQuery();
+  const showSkeleton = useMinimumLoading(isLoading);
   const router = useRouter();
 
   const toDateKey = (value: string) => {
@@ -85,18 +88,22 @@ export default function AskedTopicsTimeline() {
   const hasOlder = mappedTopics.length > DEFAULT_VISIBLE_ITEMS;
 
   return (
-    <div className="w-full md:w-[40%] p-4">
-      {isLoading && (
-        <p className="text-sm text-muted-foreground">Loading your sessions...</p>
+    <div className="w-full p-4">
+      {showSkeleton && (
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <SkeletonListItem key={index} />
+          ))}
+        </div>
       )}
 
-      {!isLoading && groupedTopics.length === 0 && (
+      {!showSkeleton && groupedTopics.length === 0 && (
         <p className="text-sm text-muted-foreground">
           You have not created a question yet.
         </p>
       )}
 
-      {groupedTopics.map((section, i) => (
+      {!showSkeleton && groupedTopics.map((section, i) => (
         <div key={i}>
           <div className="ps-2 my-2">
             <h3 className="text-xs font-medium uppercase text-muted-foreground">
@@ -110,13 +117,13 @@ export default function AskedTopicsTimeline() {
             <div key={topic.id} className="flex gap-x-3">
               <div className="relative after:absolute after:top-7 after:bottom-0 after:start-3.5 after:w-px after:-translate-x-[0.5px] after:bg-border">
                 <div className="z-10 size-7 flex justify-center items-center">
-                  <div className="size-2 rounded-full bg-orange-500"></div>
+                  <div className="size-2 rounded-full bg-warning"></div>
                 </div>
                 {isLastInSection && <div className="absolute bottom-0 start-3.5 w-px h-0" />}
               </div>
 
               <div className="grow pb-8">
-                <h3 className="text-md font-pt font-medium text-foreground">
+                <h3 className="text-md font-sans font-medium text-foreground">
                   {topic.title}
                 </h3>
                 <p className="mt-0.5 text-sm text-muted-foreground">
@@ -147,7 +154,7 @@ export default function AskedTopicsTimeline() {
       ))}
 
       {/* Show older */}
-      {hasOlder && (
+      {!showSkeleton && hasOlder && (
       <div className="ps-2 -ms-px flex gap-x-3">
         <button
           type="button"

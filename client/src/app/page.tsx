@@ -177,10 +177,10 @@ export default function Home() {
         </div>
         <div className="min-h-screen max-w-[1400px] mx-auto p-5 space-y-8">
           <div className="flex flex-col md:flex-row justify-between mt-4 items-center gap-4">
-    <h1 className="font-pt font-medium text-2xl sm:text-3xl md:text-4xl text-center md:text-left">
+    <h1 className="font-sans font-medium text-2xl sm:text-3xl md:text-4xl text-center md:text-left">
       Why Choose Us & <br /> What You Get
     </h1>
-    <Button className="w-full sm:w-auto font-pt text-sm sm:text-base bg-primary text-primary-foreground py-3 sm:py-4 px-6 sm:px-8 rounded-md shadow-xs hover:bg-primary/90">
+    <Button className="w-full sm:w-auto font-sans text-sm sm:text-base bg-primary text-primary-foreground py-3 sm:py-4 px-6 sm:px-8 rounded-md shadow-xs hover:bg-primary/90">
       <Sparkles className="w-5 h-5 sm:w-6 sm:h-6" />
       <span className="ml-2">Let's start learning</span>
     </Button>
@@ -192,7 +192,7 @@ export default function Home() {
                 className="p-4 rounded-md border border-border hover:shadow-lg hover:border-border transition-shadow animation-duration-initial duration-500 bg-card text-left"
               >
                 <feature.icon className="w-8 h-8 text-primary mb-5" />
-                <h3 className="text-lg sm:text-xl font-pt font-medium">{feature.title}</h3>
+                <h3 className="text-lg sm:text-xl font-sans font-medium">{feature.title}</h3>
                 <p className="text-sm sm:text-base text-muted-foreground mt-2">
                   {feature.description}
                 </p>
@@ -203,10 +203,10 @@ export default function Home() {
 
         <div className="min-h-screen p-3 sm:p-5 w-full">
           <div className="p-3 sm:p-4 bg-muted rounded-md space-y-5 border border-border">
-            <h1 className="text-center uppercase font-medium text-primary text-xl sm:text-2xl font-pt mt-6">
+            <h1 className="text-center uppercase font-medium text-primary text-xl sm:text-2xl font-sans mt-6">
               contact us
             </h1>
-            <p className="text-center text-foreground text-xl sm:text-3xl md:text-4xl font-pt">
+            <p className="text-center text-foreground text-xl sm:text-3xl md:text-4xl font-sans">
               We'd love to talk to you
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 sm:max-w-[80%] mx-auto mt-6">
@@ -214,7 +214,7 @@ export default function Home() {
                 <div className="flex gap-4">
                   <PhoneIncoming className="w-8 h-8 text-primary" />
                   <div className="flex flex-col align-baseline">
-                    <h1 className="uppercase font-pt text-muted-foreground text-xs sm:text-sm font-medium">
+                    <h1 className="uppercase font-sans text-muted-foreground text-xs sm:text-sm font-medium">
                       Call us
                     </h1>
                     <p className="font-sans font-medium text-base sm:text-lg">
@@ -227,7 +227,7 @@ export default function Home() {
                 <div className="flex gap-4">
                   <Mail className="w-8 h-8 text-primary" />
                   <div className="flex flex-col align-baseline">
-                    <h1 className="uppercase text-muted-foreground font-pt text-sm font-medium">
+                    <h1 className="uppercase text-muted-foreground font-sans text-sm font-medium">
                       Email us
                     </h1>
                     <p className="font-sans font-medium text-md sm:text-lg">
@@ -240,7 +240,7 @@ export default function Home() {
                 <div className="flex gap-4">
                   <MapPin className="w-8 h-8 text-primary" />
                   <div className="flex flex-col align-baseline">
-                    <h1 className="uppercase text-sm text-muted-foreground font-medium font-pt">
+                    <h1 className="uppercase text-sm text-muted-foreground font-medium font-sans">
                       Head Quarters
                     </h1>
                     <p className="font-sans font-medium text-lg">
@@ -253,13 +253,13 @@ export default function Home() {
           </div>
           <div className="flex flex-col lg:flex-row gap-6 mt-10 p-4 max-w-6xl mx-auto">
             <div className="w-full lg:w-2/5 flex flex-col justify-center gap-2">
-              <p className="bg-primary/10 text-primary shadow-2xs rounded-full py-2 px-4 text-xs sm:text-sm font-pt">
+              <p className="bg-primary/10 text-primary shadow-2xs rounded-full py-2 px-4 text-xs sm:text-sm font-sans">
                 Our success number
               </p>
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-medium">
                 Lets Work Togather
               </h1>
-              <p className="font-pt text-muted-foreground text-sm sm:text-base md:text-lg font-medium">
+              <p className="font-sans text-muted-foreground text-sm sm:text-base md:text-lg font-medium">
                 share us improvements , features too add feedback , please
                 contact us for basic questions. we're here to help!
               </p>
@@ -301,7 +301,7 @@ export default function Home() {
           </div>
         </div>
       </main>
-      <footer className="mt-16 py-10 px-4 sm:px-6 text-sm text-foreground *:font-pt *:font-medium">
+      <footer className="mt-16 py-10 px-4 sm:px-6 text-sm text-foreground *:font-sans *:font-medium">
         <div className="max-w-6xl mx-auto text-center space-y-4">
           <p className="text-base sm:text-lg italic text-foreground max-w-xl mx-auto">
             "The right question asked at the right time can change everything."

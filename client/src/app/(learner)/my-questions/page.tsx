@@ -9,24 +9,26 @@ import { RecentQuestionsTimeline } from '@/components/learner/RecentQuestionsTim
 import { SelectedTagsDisplay } from '@/components/learner/selected-tag-display';
 import { Tag, TagsFilterSelect } from '@/components/learner/tags-filter-select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { SkeletonListItem } from '@/components/ui/skeleton';
+import { useMinimumLoading } from '@/hooks/use-minimum-loading';
 import { useMyQuestionsQuery } from '@/query/questionMutation';
 
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 const sampleTags: Tag[] = [
-  { id: '1', label: 'React', color: '#61DAFB' },
-  { id: '2', label: 'TypeScript', color: '#3178C6' },
-  { id: '3', label: 'Next.js', color: '#000000' },
-  { id: '4', label: 'Tailwind CSS', color: '#06B6D4' },
-  { id: '5', label: 'JavaScript', color: '#F7DF1E' },
-  { id: '6', label: 'Node.js', color: '#339933' },
-  { id: '7', label: 'Python', color: '#3776AB' },
-  { id: '8', label: 'Design', color: '#FF6B6B' },
-  { id: '9', label: 'UI/UX', color: '#4ECDC4' },
-  { id: '10', label: 'Frontend', color: '#9B59B6' },
-  { id: '11', label: 'Backend', color: '#E67E22' },
-  { id: '12', label: 'Database', color: '#2ECC71' },
+  { id: '1', label: 'React' },
+  { id: '2', label: 'TypeScript' },
+  { id: '3', label: 'Next.js' },
+  { id: '4', label: 'Tailwind CSS' },
+  { id: '5', label: 'JavaScript' },
+  { id: '6', label: 'Node.js' },
+  { id: '7', label: 'Python' },
+  { id: '8', label: 'Design' },
+  { id: '9', label: 'UI/UX' },
+  { id: '10', label: 'Frontend' },
+  { id: '11', label: 'Backend' },
+  { id: '12', label: 'Database' },
 ];
 
 const timelineQuestions = [
@@ -64,6 +66,7 @@ export default function MyQuestionPage() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { data: myQuestions = [], isLoading } = useMyQuestionsQuery();
+  const showSkeleton = useMinimumLoading(isLoading);
 
   const queryFromUrl = (searchParams.get('q') || '').trim();
 
@@ -207,17 +210,19 @@ export default function MyQuestionPage() {
             }
           />
         </div>
-        <div className="flex gap-4">
-          <div className="space-y-4 w-3/4">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
+          <div className="space-y-4 lg:col-span-3">
             <QuestionCounterSorter
               questionCount={mappedQuestions.length}
               onSortChange={handleSortChange}
             />
             <ScrollArea className="h-fit w-full p-2">
               <div className="space-y-4">
-                {isLoading ? (
-                  <div className="text-center py-8 text-gray-500">
-                    Loading your questions...
+                {showSkeleton ? (
+                  <div className="space-y-3">
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <SkeletonListItem key={index} />
+                    ))}
                   </div>
                 ) : mappedQuestions.length > 0 ? (
                   mappedQuestions.map((question) => (
@@ -240,7 +245,7 @@ export default function MyQuestionPage() {
             </ScrollArea>
             <PaginationDemo />
           </div>
-          <div>
+          <div className="lg:col-span-1">
             <RecentQuestionsTimeline questions={timelineQuestions} />
           </div>
         </div>

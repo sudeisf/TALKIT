@@ -8,10 +8,10 @@ export default function SessionsPage() {
     <div className="flex flex-col items-center justify-center h-full text-center px-4">
       <div className="flex flex-col items-center gap-4 max-w-md mx-auto">
         <div className="p-6 rounded-full shadow-none">
-          <MessageCircle className="w-10 h-10 text-[#03624C]" />
+          <MessageCircle className="w-10 h-10 text-primary" />
         </div>
 
-        <h1 className="text-2xl font-bold bg-[#03624C] bg-clip-text text-transparent">
+        <h1 className="text-2xl font-bold bg-primary bg-clip-text text-transparent">
           Welcome to your sessions space
         </h1>
 
@@ -22,7 +22,7 @@ export default function SessionsPage() {
 
         <Button
           variant={'outline'}
-          className="px-4 py-2 mt-2 rounded-sm text-[#03624C] border-1 shadow-2xs  transition-all "
+          className="px-4 py-2 mt-2 rounded-sm text-primary border-1 shadow-2xs  transition-all "
         >
           Create New Session
         </Button>

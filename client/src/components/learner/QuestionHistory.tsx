@@ -7,18 +7,18 @@ import { useState } from 'react';
 import { PaginationDemo } from './QuestionsPaginations';
 
 const sampleTags: Tag[] = [
-  { id: '1', label: 'React', color: '#61DAFB' },
-  { id: '2', label: 'TypeScript', color: '#3178C6' },
-  { id: '3', label: 'Next.js', color: '#000000' },
-  { id: '4', label: 'Tailwind CSS', color: '#06B6D4' },
-  { id: '5', label: 'JavaScript', color: '#F7DF1E' },
-  { id: '6', label: 'Node.js', color: '#339933' },
-  { id: '7', label: 'Python', color: '#3776AB' },
-  { id: '8', label: 'Design', color: '#FF6B6B' },
-  { id: '9', label: 'UI/UX', color: '#4ECDC4' },
-  { id: '10', label: 'Frontend', color: '#9B59B6' },
-  { id: '11', label: 'Backend', color: '#E67E22' },
-  { id: '12', label: 'Database', color: '#2ECC71' },
+  { id: '1', label: 'React' },
+  { id: '2', label: 'TypeScript' },
+  { id: '3', label: 'Next.js' },
+  { id: '4', label: 'Tailwind CSS' },
+  { id: '5', label: 'JavaScript' },
+  { id: '6', label: 'Node.js' },
+  { id: '7', label: 'Python' },
+  { id: '8', label: 'Design' },
+  { id: '9', label: 'UI/UX' },
+  { id: '10', label: 'Frontend' },
+  { id: '11', label: 'Backend' },
+  { id: '12', label: 'Database' },
 ];
 
 const sampleQuestions = [

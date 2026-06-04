@@ -148,7 +148,7 @@ export default function HelperProfilePage() {
               </div>
             </div>
           ) : (
-            <div className="w-full h-full rounded-t-md bg-[#03624C] flex justify-end p-4">
+            <div className="w-full h-full rounded-t-md bg-primary flex justify-end p-4">
               <UploadCoverImage onUploaded={setCoverImage} />
             </div>
           )}
@@ -167,7 +167,7 @@ export default function HelperProfilePage() {
 
           <div className="flex justify-between">
             <div className="pt-5 space-y-2">
-              <h1 className="text-2xl font-pt font-bold">{displayName}</h1>
+              <h1 className="text-2xl font-sans font-bold">{displayName}</h1>
               <p className="text-md text-muted-foreground">{displayRole}</p>
               <p className="text-md text-muted-foreground">{displayLocation}</p>
               <div>
@@ -183,7 +183,7 @@ export default function HelperProfilePage() {
                 <Link href={'/helper-settings'}>
                   <Button
                     variant={'outline'}
-                    className="border-[#03624C] border p-5 text-md text-[#03624C] rounded-full mt-2 shadow-xs "
+                    className="border-primary border p-5 text-md text-primary rounded-full mt-2 shadow-xs "
                   >
                     Settings
                   </Button>
@@ -192,10 +192,10 @@ export default function HelperProfilePage() {
             </div>
             <div className="flex flex-col gap-2 justify-between">
               <div className="flex flex-col items-end gap-2">
-                <h1 className="font-pt text-md flex text-muted-foreground gap-2 w-fit">
+                <h1 className="font-sans text-md flex text-muted-foreground gap-2 w-fit">
                   Current role <Briefcase className="w-4 h-4" />
                 </h1>
-                <h2 className="rounded-full bg-muted text-sm p-2 font-pt capitalize font-medium px-2">
+                <h2 className="rounded-full bg-muted text-sm p-2 font-sans capitalize font-medium px-2">
                   {currentRole}
                 </h2>
               </div>
@@ -207,7 +207,7 @@ export default function HelperProfilePage() {
                   {displaySkills.length > 0 ? (
                     displaySkills.map((skill: string, index: number) => (
                       <div key={index}>
-                        <p className="bg-muted p-2 text-sm w-fit rounded-full font-pt font-medium text-foreground">
+                        <p className="bg-muted p-2 text-sm w-fit rounded-full font-sans font-medium text-foreground">
                           {skill}
                         </p>
                       </div>
@@ -225,7 +225,7 @@ export default function HelperProfilePage() {
           {/*<Card className="shadow-none rounded-xl border-0 bg-white/95 p-2 ">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-orange-600" />
+                  <Target className="h-5 w-5 text-warning" />
                   Level Progress
                 </CardTitle>
               </CardHeader>
@@ -253,7 +253,7 @@ export default function HelperProfilePage() {
             <Card className="shadow-xs border border-border rounded-xl bg-card hover:shadow-xl transition-shadow">
               <CardContent className="p-6 text-center">
                 <div className="flex flex-col items-center">
-                  <BookOpen className="h-8 w-8 text-[#03624c] mb-2" />
+                  <BookOpen className="h-8 w-8 text-primary mb-2" />
                   <h3 className="text-2xl font-bold text-foreground">
                     {overview?.helped_learners ?? userInfo.HelpedLearners}
                   </h3>
@@ -265,7 +265,7 @@ export default function HelperProfilePage() {
             <Card className="shadow-xs border border-border rounded-xl bg-card hover:shadow-xl transition-shadow">
               <CardContent className="p-6 text-center">
                 <div className="flex flex-col items-center">
-                  <User className="h-8 w-8 text-[#03624c] mb-2" />
+                  <User className="h-8 w-8 text-primary mb-2" />
                   <h3 className="text-2xl font-bold text-foreground">
                     {overview?.sessions_joined ?? userInfo.sessionsJoined}
                   </h3>
@@ -277,8 +277,8 @@ export default function HelperProfilePage() {
             <Card className="shadow-xs border border-border rounded-xl bg-card hover:shadow-xl transition-shadow">
               <CardContent className="p-6 text-center">
                 <div className="flex flex-col items-center">
-                  <Clock className="h-8 w-8 text-[#03624c] mb-2" />
-                  <h3 className="text-2xl font-bold text-[#03624c]">
+                  <Clock className="h-8 w-8 text-primary mb-2" />
+                  <h3 className="text-2xl font-bold text-primary">
                     {overview?.ongoing_sessions ?? userInfo.ongoingSessions}
                   </h3>
                   <p className="text-sm text-muted-foreground">Ongoing Sessions</p>
@@ -289,7 +289,7 @@ export default function HelperProfilePage() {
             <Card className="shadow-xs border border-border rounded-xl bg-card hover:shadow-xl transition-shadow">
               <CardContent className="p-6 text-center">
                 <div className="flex flex-col items-center">
-                  <TimerIcon className="h-8 w-8 text-[#03624c] mb-2" />
+                  <TimerIcon className="h-8 w-8 text-primary mb-2" />
                   <h3 className="text-2xl font-bold text-foreground">
                     {overview?.average_response_minutes ?? userInfo.avargeResponseTime}{' '}
                     <span className="text-[.96rem]">min</span>

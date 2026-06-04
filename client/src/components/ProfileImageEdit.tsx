@@ -192,7 +192,7 @@ export default function UploadProfileImage({ onUploaded }: UploadProfileImagePro
                       onDragLeave={handleDragLeave}
                       className={`rounded-lg p-6 text-center cursor-pointer transition-all duration-200 border-2 border-dashed ${
                         isDragOver || isOver
-                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400'
+                          ? 'border-primary bg-primary/5 dark:bg-primary/10 dark:border-primary'
                           : 'border-gray-300 hover:border-gray-400 dark:border-gray-600 dark:hover:border-gray-500 bg-gray-50 dark:bg-gray-800/50'
                       }`}
                       onClick={() =>
@@ -260,7 +260,7 @@ export default function UploadProfileImage({ onUploaded }: UploadProfileImagePro
               </Button>
               <Button
                 type="submit"
-                className=" bg-[#03624C] text-white rounded-md hover:bg-[#03624C]/90 disabled:opacity-50 dark:bg-[#03624C] dark:hover:bg-[#03624C]/80"
+                className=" bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 dark:bg-primary dark:hover:bg-primary/90"
                 disabled={!droppedFile || !form.formState.isValid || isUploading}
               >
                 {isUploading ? 'Uploading...' : 'Save Changes'}

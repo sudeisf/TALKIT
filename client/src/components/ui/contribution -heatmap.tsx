@@ -107,18 +107,18 @@ export function ContributionHeatmap() {
 
   const panelColors = isDarkMode
     ? {
-        0: '#161b22',
-        2: '#0e4429',
-        8: '#006d32',
-        16: '#26a641',
-        24: '#39d353',
+        0: 'var(--muted)',
+        2: 'color-mix(in srgb, var(--primary) 24%, transparent)',
+        8: 'color-mix(in srgb, var(--primary) 42%, transparent)',
+        16: 'color-mix(in srgb, var(--primary) 68%, transparent)',
+        24: 'var(--primary)',
       }
     : {
-        0: '#ebedf0',
-        2: '#9be9a8',
-        8: '#40c463',
-        16: '#30a14e',
-        24: '#216e39',
+        0: 'var(--muted)',
+        2: 'color-mix(in srgb, var(--primary) 18%, var(--background))',
+        8: 'color-mix(in srgb, var(--primary) 38%, var(--background))',
+        16: 'color-mix(in srgb, var(--primary) 68%, var(--background))',
+        24: 'var(--primary)',
       };
 
   if (loading) {
@@ -135,7 +135,7 @@ export function ContributionHeatmap() {
 
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="text-[#03624C] text-center">
+        <div className="text-primary text-center">
           <div className="font-medium mb-2">Failed to load contributions</div>
           <div className="text-sm text-muted-foreground">{errorMessage}</div>
         </div>
@@ -161,7 +161,7 @@ export function ContributionHeatmap() {
               onClick={() => setSelectedYear(year)}
               className={`px-3 py-1 text-sm rounded transition-colors ${
                 selectedYear === year
-                  ? 'bg-[#03624C] text-primary-foreground font-medium'
+                  ? 'bg-primary text-primary-foreground font-medium'
                   : 'text-muted-foreground hover:text-foreground hover:bg-muted'
               }`}
             >

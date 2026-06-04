@@ -25,11 +25,13 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useMinimumLoading } from '@/hooks/use-minimum-loading';
 
 const chartConfig = {
   sessions: {
     label: 'Sessions',
-    color: '#03624C',
+    color: 'var(--primary)',
   },
   label: {
     color: 'var(--background)',
@@ -37,7 +39,8 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function TotalSessionsChart() {
-  const { data } = useHelperSessionsChartQuery();
+  const { data, isLoading } = useHelperSessionsChartQuery();
+  const showSkeleton = useMinimumLoading(isLoading);
 
   const sessionData = data?.sessions ?? [];
   const periodLabel = data?.period_label ?? 'Last 6 months';
@@ -48,13 +51,15 @@ export function TotalSessionsChart() {
     <Card className="w-full max-w-2xl *:font-sans border-0 shadow-none">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 font-rubik font-semibold">
-          <MessageSquare className="h-5 w-5 text-[#03624C]" />
+          <MessageSquare className="h-5 w-5 text-primary" />
           Total Sessions
         </CardTitle>
         <CardDescription>{periodLabel}</CardDescription>
       </CardHeader>
       <CardContent>
-        {hasSessionData ? (
+        {showSkeleton ? (
+          <Skeleton className="h-[280px] w-full rounded-lg" />
+        ) : hasSessionData ? (
           <ChartContainer config={chartConfig}>
             <BarChart
               accessibilityLayer
@@ -105,7 +110,7 @@ export function TotalSessionsChart() {
         {hasSessionData ? (
           <div className="flex gap-2 leading-none font-medium">
             Trending by {Math.abs(trendPercentage).toFixed(2)}% this month
-            <TrendingUp className="h-4 w-4 text-[#03624C]" />
+            <TrendingUp className="h-4 w-4 text-primary" />
           </div>
         ) : (
           <div className="leading-none font-medium text-muted-foreground">

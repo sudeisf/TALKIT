@@ -232,7 +232,7 @@ const VoiceRecorder = forwardRef(function VoiceRecorder(
               ? stopRecordingInternal
               : startRecordingInternal
           }
-          className="flex-shrink-0 w-8 h-8 rounded-full bg-black text-white flex items-center justify-center"
+          className="flex-shrink-0 w-8 h-8 rounded-full bg-black text-primary-foreground flex items-center justify-center"
           aria-label={
             isRecording
               ? 'Stop recording'
@@ -258,13 +258,13 @@ const VoiceRecorder = forwardRef(function VoiceRecorder(
             {waveformData.map((value, index) => {
               const baseHeight = value;
               const heightPct = 25 + baseHeight * 55;
-              let barColor = '#d4d4d4';
+              let barColor = 'var(--muted-foreground)';
 
               if (isRecording) {
-                barColor = '#000000';
+                barColor = 'var(--primary)';
               } else if (audioUrl && duration > 0) {
                 const isPlayed = index / waveformData.length < progress;
-                barColor = isPlayed ? '#000000' : '#d4d4d4';
+                barColor = isPlayed ? 'var(--primary)' : 'var(--muted-foreground)';
               }
 
               return (
@@ -293,7 +293,7 @@ const VoiceRecorder = forwardRef(function VoiceRecorder(
         {/* right: red bin to cancel */}
         <button
           onClick={cancelInternal}
-          className="flex-shrink-0 w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100"
+          className="flex-shrink-0 w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-danger/10"
           aria-label="Delete voice message"
         >
           <Trash2 className="w-3.5 h-3.5" />

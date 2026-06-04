@@ -176,7 +176,7 @@ export default function UploadCoverImage({ onUploaded }: UploadCoverImageProps) 
                       onDragLeave={handleDragLeave}
                       className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
                         isDragOver || isOver
-                          ? 'border-blue-500 bg-blue-50'
+                          ? 'border-primary bg-primary/5'
                           : 'border-gray-300 hover:border-gray-400'
                       }`}
                       onClick={() =>
@@ -257,7 +257,7 @@ export default function UploadCoverImage({ onUploaded }: UploadCoverImageProps) 
             ) : null}
             <button
               type="submit"
-              className="w-full bg-[#03624C] text-white py-2 px-4 rounded hover:bg-[#03624C]/90 disabled:opacity-50"
+              className="w-full bg-primary text-primary-foreground py-2 px-4 rounded hover:bg-primary/90 disabled:opacity-50"
               disabled={!droppedFile || !form.formState.isValid || isUploading}
             >
               {isUploading ? 'Uploading...' : 'Upload'}

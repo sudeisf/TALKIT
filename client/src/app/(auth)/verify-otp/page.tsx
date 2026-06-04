@@ -58,7 +58,7 @@ export default function OtpPage() {
         onSuccess: (data) => {
           toast.success(data.message, {
             style: {
-              background: 'linear-gradient(to right, #f12711, #f5af19)',
+              background: 'linear-gradient(to right, var(--danger), var(--warning))',
               WebkitBackgroundClip: 'text',
               fontWeight: 'bold',
               fontSize: '16px',
@@ -92,34 +92,34 @@ export default function OtpPage() {
         <div className="flex items-center justify-center h-[80vh]">
           <SpinnerInfinity
             thickness={100}
-            secondaryColor="#f0f0f0"
-            color="#EA580C"
+            secondaryColor="var(--muted)"
+            color="var(--primary)"
             size={90}
           />
         </div>
       ) : (
         <div>
           <div className="flex justify-between p-4">
-            <h1 className="bg-gradient-to-r from-[#03624C] to-[#03624C]/80 bg-clip-text text-transparent text-xl">
+            <h1 className="bg-primary bg-clip-text text-transparent text-xl">
               Talkit
             </h1>
             <div className="flex space-x-0.5 text-md"></div>
           </div>
           {globalError && (
-            <div className="text-red-600 text-sm font-medium   form-sans text-center mt-4">
+            <div className="text-danger text-sm font-medium   form-sans text-center mt-4">
               {globalError}
             </div>
           )}
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
-              className="space-y-4 w-full max-w-md mx-auto p-2 md:p-10 font-inter"
+              className="space-y-4 w-full max-w-md mx-auto p-2 md:p-10 font-sans"
             >
               <div className="flex flex-col space-y-2.5 mb-10 md:mb-5 mt-10 md:mt-0 text-center ">
-                <h1 className="font-medium text-[#3A3D44] text-3xl font-sans">
+                <h1 className="font-medium text-foreground text-3xl font-sans">
                   Enter the OTP{' '}
                 </h1>
-                <p className="text-[#999ba0] font-sans">
+                <p className="text-muted-foreground font-sans">
                   Please enter the 6-digit code sent to your email address
                 </p>
               </div>
@@ -142,12 +142,12 @@ export default function OtpPage() {
                         <InputOTPGroup className="mx-auto">
                           <InputOTPSlot index={0} className="p-5" />
                           <InputOTPSlot index={1} className="p-5" />
-                          <InputOTPSeparator className="text-[#47307d]">
+                          <InputOTPSeparator className="text-primary">
                             -
                           </InputOTPSeparator>
                           <InputOTPSlot index={2} className="p-5" />
                           <InputOTPSlot index={3} className="p-5" />
-                          <InputOTPSeparator className="text-[#47307d]">
+                          <InputOTPSeparator className="text-primary">
                             -
                           </InputOTPSeparator>
                           <InputOTPSlot index={4} className="p-5" />
@@ -162,18 +162,18 @@ export default function OtpPage() {
 
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-[#03624C] to-[#03624C]/80  text-white font-medium font-sans  py-5 text-sm "
+                className="w-full bg-primary  text-primary-foreground font-medium font-sans  py-5 text-sm "
               >
                 Verify OTP <ArrowRight />
               </Button>
 
-              <div className="flex justify-center align-middle font-inter gap-2">
+              <div className="flex justify-center align-middle font-sans gap-2">
                 <p className="text-md font-sans font-normal ">
                   Didn't receive the OTP?
                 </p>
                 <Link
                   href="/forgot-password"
-                  className="text-md text-[#03624C]  font-medium font-sans"
+                  className="text-md text-primary  font-medium font-sans"
                 >
                   Resend OTP
                 </Link>

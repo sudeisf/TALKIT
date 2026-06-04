@@ -28,7 +28,7 @@ function RoleCard({ title, description, isSelected, onClick, illustration, accen
         "group relative overflow-hidden rounded-lg p-5 text-left",
         "border border-border",
         "bg-card text-card-foreground shadow-sm hover:shadow-[0_8px_10px_rgba(3,98,76,0.25)]",
-        isSelected ? "border-[#03624C] bg-[#03624C]/8" : "border-border",
+        isSelected ? "border-primary bg-primary/5" : "border-border",
          "transition-all duration-200"
       )}
     >
@@ -51,7 +51,7 @@ function RoleCard({ title, description, isSelected, onClick, illustration, accen
           <div
             className={cn(
               "w-5 h-5 rounded-full border-2 flex items-center justify-center",
-              isSelected ? "border-[#03624C] bg-[#03624C]" : "border-border",
+              isSelected ? "border-primary bg-primary" : "border-border",
             )}
           >
             {isSelected && <div className="w-2 h-2 bg-white rounded-full" />}
@@ -94,8 +94,8 @@ export default function CompleteProfile() {
       <div className="flex items-center justify-center h-[60vh]">
         <SpinnerInfinity
           thickness={100}
-          secondaryColor="#f0f0f0"
-          color="#03624C"
+          secondaryColor="var(--muted)"
+          color="var(--primary)"
           size={90}
         />
       </div>
@@ -123,22 +123,22 @@ export default function CompleteProfile() {
             illustration={
               <svg className="w-full h-full" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
                 {/* Helper illustration - mentor/teacher figure */}
-                <circle cx="100" cy="50" r="25" fill="#03624C" opacity="0.8" />
+                <circle cx="100" cy="50" r="25" fill="var(--primary)" opacity="0.8" />
                 <path
                   d="M75 80 Q100 95 125 80 L130 140 Q115 160 100 165 Q85 160 70 140 Z"
-                  fill="#03624C"
+                  fill="var(--primary)"
                   opacity="0.7"
                 />
-                <circle cx="60" cy="85" r="8" fill="#03624C" opacity="0.6" />
-                <circle cx="140" cy="85" r="8" fill="#03624C" opacity="0.6" />
+                <circle cx="60" cy="85" r="8" fill="var(--primary)" opacity="0.6" />
+                <circle cx="140" cy="85" r="8" fill="var(--primary)" opacity="0.6" />
                 {/* Knowledge rays */}
-                <line x1="100" y1="20" x2="100" y2="5" stroke="#03624C" strokeWidth="2" opacity="0.5" />
-                <line x1="130" y1="30" x2="140" y2="20" stroke="#03624C" strokeWidth="2" opacity="0.5" />
-                <line x1="70" y1="30" x2="60" y2="20" stroke="#03624C" strokeWidth="2" opacity="0.5" />
+                <line x1="100" y1="20" x2="100" y2="5" stroke="var(--primary)" strokeWidth="2" opacity="0.5" />
+                <line x1="130" y1="30" x2="140" y2="20" stroke="var(--primary)" strokeWidth="2" opacity="0.5" />
+                <line x1="70" y1="30" x2="60" y2="20" stroke="var(--primary)" strokeWidth="2" opacity="0.5" />
               </svg>
             }
-            accentColor="from-green-100 to-emerald-100"
-            badgeColor="bg-green-100 text-green-700"
+            accentColor="from-accent to-muted"
+            badgeColor="bg-muted text-muted-foreground"
           />
 
           <RoleCard
@@ -149,22 +149,22 @@ export default function CompleteProfile() {
             illustration={
               <svg className="w-full h-full" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
                 {/* Learner illustration - student figure */}
-                <path d="M60 40 L100 20 L140 40 L120 55 L100 45 L80 55 Z" fill="#03624C" opacity="0.8" />
-                <circle cx="100" cy="70" r="22" fill="#03624C" opacity="0.7" />
+                <path d="M60 40 L100 20 L140 40 L120 55 L100 45 L80 55 Z" fill="var(--primary)" opacity="0.8" />
+                <circle cx="100" cy="70" r="22" fill="var(--primary)" opacity="0.7" />
                 <path
                   d="M80 95 Q100 105 120 95 L125 145 Q110 165 100 170 Q90 165 75 145 Z"
-                  fill="#03624C"
+                  fill="var(--primary)"
                   opacity="0.6"
                 />
-                <circle cx="70" cy="100" r="7" fill="#03624C" opacity="0.5" />
-                <circle cx="130" cy="100" r="7" fill="#03624C" opacity="0.5" />
+                <circle cx="70" cy="100" r="7" fill="var(--primary)" opacity="0.5" />
+                <circle cx="130" cy="100" r="7" fill="var(--primary)" opacity="0.5" />
                 {/* Book/growth elements */}
-                <rect x="55" y="115" width="20" height="25" fill="#03624C" opacity="0.5" />
-                <rect x="125" y="115" width="20" height="25" fill="#03624C" opacity="0.5" />
+                <rect x="55" y="115" width="20" height="25" fill="var(--primary)" opacity="0.5" />
+                <rect x="125" y="115" width="20" height="25" fill="var(--primary)" opacity="0.5" />
               </svg>
             }
-            accentColor="from-teal-100 to-cyan-100"
-            badgeColor="bg-teal-100 text-teal-700"
+            accentColor="from-accent to-muted"
+            badgeColor="bg-muted text-muted-foreground"
           />
         </div>
 
@@ -179,7 +179,7 @@ export default function CompleteProfile() {
             onClick={handleContinue}
             disabled={!selectedRole}
             size="lg"
-            className="w-full sm:w-auto rounded-sm shadow-[0_6px_25px_rgba(3,98,76,0.25)] bg-[#03624C] text-white hover:bg-[#03624C]"
+            className="w-full sm:w-auto rounded-sm shadow-lg shadow-primary/20 bg-primary text-primary-foreground hover:bg-primary"
           >
             Continue <ArrowUpRight className="ml-2 h-4 w-4" />
           </Button>

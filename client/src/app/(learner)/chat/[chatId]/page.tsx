@@ -13,6 +13,8 @@ import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import hljs from 'highlight.js/lib/core';
 import api from '@/lib/api/axiosInstance'
 import { MessageInput, type OutgoingChatMessage } from '@/components/helper/inputBox';
+import { Skeleton, SkeletonChatMessage } from '@/components/ui/skeleton';
+import { useMinimumLoading } from '@/hooks/use-minimum-loading';
 
 // ----------------------------------------------------------------------
 // HELPER FUNCTIONS 
@@ -61,7 +63,7 @@ const renderLinkedText = (text: string) => {
           href={href}
           target="_blank"
           rel="noreferrer"
-          className="text-[#03624c] underline underline-offset-2"
+          className="text-primary underline underline-offset-2"
         >
           {part}
         </a>
@@ -145,6 +147,7 @@ export default function ChatRoomPage() {
     profile_image_url?: string | null;
   }>>([]);
   const [onlineUserIds, setOnlineUserIds] = useState<number[]>([]);
+  const showThreadSkeleton = useMinimumLoading(!historyLoaded);
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -374,9 +377,13 @@ export default function ChatRoomPage() {
                     </AvatarFallback>
                   </Avatar>
                 )}
-                <h2 className="min-w-0 truncate font-medium text-lg text-foreground">
-                  {sessionDetails?.title || `Loading Session #${ticketId}...`}
-                </h2>
+                {showThreadSkeleton ? (
+                  <Skeleton className="h-6 w-56" />
+                ) : (
+                  <h2 className="min-w-0 truncate font-medium text-lg text-foreground">
+                    {sessionDetails?.title || `Loading Session #${ticketId}...`}
+                  </h2>
+                )}
                 <span className={cn("w-2 h-2 rounded-full animate-pulse", isConnected ? "bg-green-500" : "bg-red-500")} />
               </div>
               {owner && (
@@ -435,7 +442,7 @@ export default function ChatRoomPage() {
                   </div>
                   <ScrollArea className="mt-4 h-[70vh] pr-3">
                     <div className="mb-4 text-xs font-semibold text-muted-foreground flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                      <span className="h-2 w-2 rounded-full bg-success" />
                       ONLINE
                     </div>
                     <div className="grid gap-3">
@@ -498,7 +505,13 @@ export default function ChatRoomPage() {
       <ScrollArea className="min-h-0 flex-1 bg-muted/20">
         <div className="min-h-0 p-4 space-y-6">
           
-          {sessionDetails && (
+          {showThreadSkeleton ? (
+            <div className="space-y-5">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <SkeletonChatMessage key={index} sent={index % 3 === 1} />
+              ))}
+            </div>
+          ) : sessionDetails && (
             <div className="min-w-0 rounded-lg border border-border bg-card p-4 shadow-sm">
               <div className="flex min-w-0 items-start gap-3">
                 {owner ? (
@@ -509,8 +522,8 @@ export default function ChatRoomPage() {
                     </AvatarFallback>
                   </Avatar>
                 ) : (
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#03624c]">
-                    <BookOpen className="h-4 w-4 text-white" />
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary">
+                    <BookOpen className="h-4 w-4 text-primary-foreground" />
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
@@ -523,11 +536,11 @@ export default function ChatRoomPage() {
             </div>
           )}
 
-          {messages.map((msg) => (
+          {!showThreadSkeleton && messages.map((msg) => (
             <div key={msg.id} className={cn('flex gap-3 max-w-[85%]', msg.sender === 'user' ? 'ml-auto flex-row-reverse' : '')}>
               <Avatar className="h-8 w-8 flex-shrink-0 mt-1">
                 <AvatarImage src={msg.avatarUrl || undefined} />
-                <AvatarFallback className={cn("text-xs text-white", msg.sender === 'user' ? "bg-[#03624c]" : "bg-slate-600")}>
+                <AvatarFallback className={cn("text-xs text-primary-foreground", msg.sender === 'user' ? "bg-primary" : "bg-slate-600")}>
                   {msg.name.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
@@ -540,7 +553,7 @@ export default function ChatRoomPage() {
                     <div className="px-1 py-0.5"><p className="text-4xl leading-none">{msg.text}</p></div>
                   ) : (
                     <div className={cn('rounded-2xl px-4 py-2 break-words', 
-                        msg.sender === 'user' ? 'bg-[#03624c] text-white rounded-tr-sm' : 'bg-white dark:bg-card border border-border text-foreground rounded-tl-sm')}>
+                        msg.sender === 'user' ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-white dark:bg-card border border-border text-foreground rounded-tl-sm')}>
                       <p className="text-[14px] leading-relaxed whitespace-pre-wrap">
                         {msg.text ? renderLinkedText(msg.text) : null}
                       </p>
@@ -549,8 +562,8 @@ export default function ChatRoomPage() {
                 )}
 
                 {msg.type === 'code' && msg.codeSnippet && (
-                  <div className="w-full max-w-[500px] overflow-hidden rounded-lg border border-border bg-[#282c34] shadow-sm">
-                    <div className="px-3 py-1.5 text-[11px] text-gray-400 border-b border-gray-700 bg-[#21252b] flex justify-between">
+                  <div className="w-full max-w-[500px] overflow-hidden rounded-lg border border-border bg-muted shadow-sm">
+                    <div className="px-3 py-1.5 text-[11px] text-gray-400 border-b border-gray-700 bg-background flex justify-between">
                       <span>{msg.codeLanguage || 'code'}</span>
                     </div>
                     <SyntaxHighlighter
@@ -562,7 +575,7 @@ export default function ChatRoomPage() {
                       {msg.codeSnippet}
                     </SyntaxHighlighter>
                     {msg.text && msg.text !== 'Code snippet' && (
-                        <div className="p-2 text-sm text-gray-300 bg-[#21252b] border-t border-gray-700">
+                        <div className="p-2 text-sm text-gray-300 bg-background border-t border-gray-700">
                             {msg.text}
                         </div>
                     )}
@@ -637,7 +650,7 @@ function VoiceMessageBubble({ audioUrl }: { audioUrl: string }) {
     <div className="flex items-center gap-3 rounded-full border border-border bg-card px-4 py-2 shadow-sm w-[260px]">
       <button
         onClick={togglePlayback}
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-white"
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-primary-foreground"
         aria-label={isPlaying ? 'Pause voice message' : 'Play voice message'}
       >
         {isPlaying ? (

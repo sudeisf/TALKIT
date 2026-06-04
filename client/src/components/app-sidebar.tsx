@@ -90,7 +90,7 @@ export function AppSidebar() {
               height={32}
               className="dark:brightness-0 dark:invert group-data-[collapsible=icon]:w-[2.15rem] group-data-[collapsible=icon]:h-[2.15rem]"
             />
-            <h1 className="text-lg font-pt text-sidebar-foreground rounded-full group-data-[collapsible=icon]:hidden">
+            <h1 className="text-lg font-sans text-sidebar-foreground rounded-full group-data-[collapsible=icon]:hidden">
               Talkit
             </h1>
           </div>
@@ -99,7 +99,7 @@ export function AppSidebar() {
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
-                    className="font-pt space-x-2 group-data-[collapsible=icon]:h-[2.65rem] group-data-[collapsible=icon]:w-[2.65rem] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-xl group-data-[collapsible=icon]:p-0 [&>svg]:group-data-[collapsible=icon]:h-[1.35rem] [&>svg]:group-data-[collapsible=icon]:w-[1.35rem]"
+                    className="font-sans space-x-2 group-data-[collapsible=icon]:h-[2.65rem] group-data-[collapsible=icon]:w-[2.65rem] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-xl group-data-[collapsible=icon]:p-0 [&>svg]:group-data-[collapsible=icon]:h-[1.35rem] [&>svg]:group-data-[collapsible=icon]:w-[1.35rem]"
                     tooltip={item.title}
                     asChild
                   >
@@ -127,7 +127,7 @@ export function AppSidebar() {
             type="button"
             onClick={handleLogout}
             disabled={isLoggingOut}
-            className="flex items-center font-pt font-medium gap-2 disabled:opacity-60 disabled:cursor-not-allowed group-data-[collapsible=icon]:h-[2.65rem] group-data-[collapsible=icon]:w-[2.65rem] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-xl group-data-[collapsible=icon]:p-0 hover:bg-sidebar-accent"
+            className="flex items-center font-sans font-medium gap-2 disabled:opacity-60 disabled:cursor-not-allowed group-data-[collapsible=icon]:h-[2.65rem] group-data-[collapsible=icon]:w-[2.65rem] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-xl group-data-[collapsible=icon]:p-0 hover:bg-sidebar-accent"
           >
             <LogOut className="w-4 h-4 group-data-[collapsible=icon]:w-[1.3rem] group-data-[collapsible=icon]:h-[1.3rem]" />
             <span className="group-data-[collapsible=icon]:hidden">

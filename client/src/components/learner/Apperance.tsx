@@ -34,7 +34,7 @@ export default function AppearanceSettings() {
     <Card className="shadow-none border-b border-x-0 border-t-0 rounded-none">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Palette className="h-5 w-5 text-purple-600" />
+          <Palette className="h-5 w-5 text-info" />
           Appearance
         </CardTitle>
       </CardHeader>

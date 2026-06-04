@@ -9,6 +9,8 @@ import SessionTabs, { type SessionTabKey } from './sessionTabs';
 import { useChatSessionsQuery } from '@/query/questionMutation';
 import { toggleQuestionBookmark } from '@/lib/api/questionApi';
 import { useEffect, useMemo, useState } from 'react';
+import { SkeletonListItem } from '@/components/ui/skeleton';
+import { useMinimumLoading } from '@/hooks/use-minimum-loading';
 
 export default function SessionsList() {
   const router = useRouter();
@@ -19,6 +21,7 @@ export default function SessionsList() {
   const [favoriteOverrides, setFavoriteOverrides] = useState<Record<number, boolean>>({});
   const [pendingFavorites, setPendingFavorites] = useState<Record<number, boolean>>({});
   const { data: sessions = [], isLoading, isError } = useChatSessionsQuery(debouncedSearch);
+  const showSkeleton = useMinimumLoading(isLoading);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -171,8 +174,12 @@ export default function SessionsList() {
       </div>
       <SessionTabs activeTab={activeTab} counts={tabCounts} onTabChange={setActiveTab} />
       <ScrollArea className="h-[calc(100vh-195px)] border border-border rounded-lg mt-4 bg-background">
-        {isLoading && (
-          <div className="p-4 text-sm text-muted-foreground">Loading sessions...</div>
+        {showSkeleton && (
+          <div className="space-y-3 p-3">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <SkeletonListItem key={index} />
+            ))}
+          </div>
         )}
 
         {isError && (
@@ -181,10 +188,10 @@ export default function SessionsList() {
           </div>
         )}
 
-        {!isLoading && !isError && searchedSessions.length === 0 && (
+        {!showSkeleton && !isError && searchedSessions.length === 0 && (
           <div className="flex min-h-[250px] items-center justify-center p-6">
             <div className="text-center space-y-2 max-w-[260px]">
-              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[#03624C]/12 text-[#03624C]">
+              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <MessageCircle className="h-5 w-5" />
               </div>
               <p className="text-foreground font-medium">{emptyState.title}</p>
@@ -193,7 +200,7 @@ export default function SessionsList() {
           </div>
         )}
 
-        {searchedSessions.map((session) => {
+        {!showSkeleton && searchedSessions.map((session) => {
           const isActive = activeSessionId === session.session_id;
           const isFavorite = getIsFavorite(session.session_id, session.is_favorite);
           const ownerName =
@@ -207,8 +214,8 @@ export default function SessionsList() {
               key={`convo-${session.session_id}`}
               className={`mx-3 my-3 rounded-2xl border transition-all cursor-pointer ${
                 isActive
-                  ? 'border-[#03624C] bg-[#F3FAF7] dark:bg-emerald-950/20 shadow-sm'
-                  : 'border-border/60 bg-card hover:border-[#03624C]/40 hover:bg-muted/30'
+                  ? 'border-primary bg-primary/5 dark:bg-primary/10 shadow-sm'
+                  : 'border-border/60 bg-card hover:border-primary/40 hover:bg-muted/30'
               }`}
             >
               <div className="flex items-start justify-between px-4 pt-4">
@@ -216,7 +223,7 @@ export default function SessionsList() {
                   {session.tags.slice(0, 2).map((tag, index) => (
                     <span
                       key={`tag-${index}`}
-                      className="bg-[#DDF3EE] text-[#0F766E] text-xs px-2 py-0.5 rounded-md font-medium uppercase tracking-wide"
+                      className="bg-info/10 text-info text-xs px-2 py-0.5 rounded-md font-medium uppercase tracking-wide"
                     >
                       {tag}
                     </span>
@@ -240,7 +247,7 @@ export default function SessionsList() {
                     <Star
                       className={`h-4 w-4 ${
                         isFavorite
-                          ? 'fill-[#03624C] text-[#03624C]'
+                          ? 'fill-primary text-primary'
                           : 'text-muted-foreground'
                       }`}
                     />

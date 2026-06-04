@@ -8,6 +8,8 @@ import SearchSessions from './sessionSearch';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useChatSessionsQuery } from '@/query/questionMutation';
+import { SkeletonListItem } from '@/components/ui/skeleton';
+import { useMinimumLoading } from '@/hooks/use-minimum-loading';
 import { toggleQuestionBookmark } from '@/lib/api/questionApi';
 import { type ChatTabKey } from './chatTabs';
 
@@ -20,6 +22,7 @@ export default function ChatList() {
   const [favoriteOverrides, setFavoriteOverrides] = useState<Record<number, boolean>>({});
   const [pendingFavorites, setPendingFavorites] = useState<Record<number, boolean>>({});
   const { data: sessions = [], isLoading, isError } = useChatSessionsQuery(debouncedSearch);
+  const showSkeleton = useMinimumLoading(isLoading);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -168,15 +171,19 @@ export default function ChatList() {
       </div>
       <ChatTabs activeTab={activeTab} counts={tabCounts} onTabChange={setActiveTab} />
       <ScrollArea className="flex-1 min-h-0 [&_[data-slot=scroll-area-scrollbar]]:hidden">
-        {isLoading && (
-          <div className="p-4 text-sm text-muted-foreground">Loading sessions...</div>
+        {showSkeleton && (
+          <div className="space-y-3 p-3">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <SkeletonListItem key={index} />
+            ))}
+          </div>
         )}
 
         {isError && (
           <div className="p-4 text-sm text-red-500">Could not load sessions.</div>
         )}
 
-        {!isLoading && !isError && searchedSessions.length === 0 && (
+        {!showSkeleton && !isError && searchedSessions.length === 0 && (
           <div className="flex min-h-[250px] items-center justify-center p-6">
             <div className="text-center space-y-2 max-w-[260px]">
               <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -188,7 +195,7 @@ export default function ChatList() {
           </div>
         )}
 
-        {searchedSessions.map((session) => {
+        {!showSkeleton && searchedSessions.map((session) => {
           const isActive = activeSessionId === session.session_id;
           const isFavorite = getIsFavorite(session.session_id, session.is_favorite);
           const ownerName =
@@ -202,8 +209,8 @@ export default function ChatList() {
               key={`convo-${session.session_id}`}
               className={`mx-3 my-3 rounded-2xl border transition-all min-w-0 cursor-pointer ${
                 isActive
-                  ? 'border-[#03624C] bg-[#F3FAF7] dark:bg-emerald-950/20 shadow-sm'
-                  : 'border-border/60 bg-card hover:border-[#03624C]/40 hover:bg-muted/30'
+                  ? 'border-primary bg-primary/5 dark:bg-primary/10 shadow-sm'
+                  : 'border-border/60 bg-card hover:border-primary/40 hover:bg-muted/30'
               }`}
             >
               <div className="flex items-start justify-between px-4 pt-4">
@@ -211,7 +218,7 @@ export default function ChatList() {
                   {session.tags.slice(0, 2).map((tag, index) => (
                     <span
                       key={`tag-${index}`}
-                      className="bg-[#DDF3EE] text-[#0F766E] text-xs px-2 py-0.5 rounded-md font-medium uppercase tracking-wide"
+                      className="bg-info/10 text-info text-xs px-2 py-0.5 rounded-md font-medium uppercase tracking-wide"
                     >
                       {tag}
                     </span>

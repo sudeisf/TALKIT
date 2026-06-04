@@ -24,13 +24,13 @@ import {
 const getNotificationIcon = (type: Notification['type']) => {
   switch (type) {
     case 'message':
-      return <MessageSquare className="h-5 w-5 text-blue-500" />;
+      return <MessageSquare className="h-5 w-5 text-primary" />;
     case 'achievement':
       return <Check className="h-5 w-5 text-green-500" />;
     case 'reminder':
-      return <Clock className="h-5 w-5 text-orange-500" />;
+      return <Clock className="h-5 w-5 text-warning" />;
     case 'system':
-      return <Info className="h-5 w-5 text-purple-500" />;
+      return <Info className="h-5 w-5 text-info" />;
     case 'study':
       return <BookOpen className="h-5 w-5 text-indigo-500" />;
     default:
@@ -41,11 +41,11 @@ const getNotificationIcon = (type: Notification['type']) => {
 const getPriorityColor = (priority: Notification['priority']) => {
   switch (priority) {
     case 'high':
-      return 'bg-red-100 text-red-800 border-red-200 dark:bg-red-500/15 dark:text-red-300 dark:border-red-500/30';
+      return 'bg-danger/10 text-danger border-danger/20 dark:bg-red-500/15 dark:text-danger dark:border-red-500/30';
     case 'medium':
-      return 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-500/15 dark:text-yellow-300 dark:border-yellow-500/30';
+      return 'bg-warning/10 text-warning border-warning/20';
     case 'low':
-      return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-500/15 dark:text-green-300 dark:border-green-500/30';
+      return 'bg-success/10 text-success border-success/20 dark:bg-green-500/15 dark:text-success dark:border-green-500/30';
     default:
       return 'bg-muted text-muted-foreground border-border';
   }
@@ -171,7 +171,7 @@ export default function NotificationsPage() {
                       <div className="size-7 flex justify-center items-center">
                         <div
                           className={`size-2 rounded-full ${
-                            !notification.isRead ? 'bg-blue-500' : 'bg-muted-foreground/70'
+                            !notification.isRead ? 'bg-info' : 'bg-muted-foreground/70'
                           }`}
                         ></div>
                       </div>
@@ -245,7 +245,7 @@ export default function NotificationsPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex items-center gap-3">
-              <MessageSquare className="h-5 w-5 text-blue-500" />
+              <MessageSquare className="h-5 w-5 text-primary" />
               <span className="text-sm text-muted-foreground">Messages & Updates</span>
             </div>
             <div className="flex items-center gap-3">
@@ -255,11 +255,11 @@ export default function NotificationsPage() {
               </span>
             </div>
             <div className="flex items-center gap-3">
-              <Clock className="h-5 w-5 text-orange-500" />
+              <Clock className="h-5 w-5 text-warning" />
               <span className="text-sm text-muted-foreground">Reminders & Alerts</span>
             </div>
             <div className="flex items-center gap-3">
-              <Info className="h-5 w-5 text-purple-500" />
+              <Info className="h-5 w-5 text-info" />
               <span className="text-sm text-muted-foreground">
                 System Notifications
               </span>

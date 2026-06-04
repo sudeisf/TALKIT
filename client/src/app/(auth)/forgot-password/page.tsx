@@ -46,7 +46,7 @@ export default function ForgotPassword() {
         disapatch(action.setEmail(values.email));
         toast.success(data.message, {
           style: {
-            background: 'linear-gradient(to right, #f12711, #f5af19)',
+            background: 'linear-gradient(to right, var(--danger), var(--warning))',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             fontWeight: 'bold',
@@ -80,15 +80,15 @@ export default function ForgotPassword() {
         <div className="flex items-center justify-center h-[80vh]">
           <SpinnerInfinity
             thickness={100}
-            secondaryColor="#f0f0f0"
-            color="#EA580C"
+            secondaryColor="var(--muted)"
+            color="var(--primary)"
             size={90}
           />
         </div>
       ) : (
         <div>
           <div className="flex justify-between p-4">
-            <h1 className="bg-gradient-to-r from-[#03624C] to-[#085543]/90 font-sans bg-clip-text text-transparent text-xl">
+            <h1 className="bg-primary font-sans bg-clip-text text-transparent text-xl">
               Talkit
             </h1>
             <div className="flex space-x-0.5 text-md"></div>
@@ -104,7 +104,7 @@ export default function ForgotPassword() {
               </p>
             </div>
             {globalError && (
-              <div className="text-red-600 text-sm font-medium   form-sans text-center mt-4">
+              <div className="text-danger text-sm font-medium   form-sans text-center mt-4">
                 {globalError}
               </div>
             )}
@@ -131,7 +131,7 @@ export default function ForgotPassword() {
 
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-[#03624C] to-[#085543] text-white font-sans  py-5 text-sm "
+                  className="w-full bg-primary text-primary-foreground font-sans  py-5 text-sm "
                 >
                   Verify email <ArrowRight />
                 </Button>

@@ -95,8 +95,8 @@ export default function Register() {
         <div className="flex items-center justify-center h-[60vh]">
           <SpinnerInfinity
             thickness={100}
-            secondaryColor="#f0f0f0"
-            color="#EA580C"
+            secondaryColor="var(--muted)"
+            color="var(--primary)"
             size={90}
           />
         </div>
@@ -111,7 +111,7 @@ export default function Register() {
             </p>
           </div>
           {globalError && (
-            <div className="text-red-600 text-sm font-medium capitalize  form-sans text-center mt-4">
+            <div className="text-danger text-sm font-medium capitalize  form-sans text-center mt-4">
               {globalError}
             </div>
           )}
