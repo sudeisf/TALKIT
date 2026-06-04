@@ -1,24 +1,18 @@
 'use client';
+
 import UploadCoverImage from '@/components/coverImageUpload';
 import { EditProfile } from '@/components/EditProfile';
 import HistoryOfQuestions from '@/components/learner/QuestionHistory';
-import { RecentQuestionsTimelineProfile } from '@/components/learner/RecentActitvityProfile';
+import { RecentQuestionsTimelineProfile } from '@/components/learner/RecentActivityProfile';
 import UploadProfileImage from '@/components/ProfileImageEdit';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
-  Bookmark,
   BookOpen,
+  Bookmark,
   Briefcase,
-  Camera,
   Clock,
-  Edit,
-  Pen,
-  Star,
-  Stars,
-  Target,
-  Trash,
   User,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -27,53 +21,14 @@ import { getCurrentUser } from '@/lib/api/authApi';
 import { SkeletonListItem, SkeletonProfileHeader } from '@/components/ui/skeleton';
 import { useMinimumLoading } from '@/hooks/use-minimum-loading';
 
-const userInfo = {
+const fallbackUserInfo = {
   name: 'User',
-  email: '',
   avatar: 'https://github.com/shadcn.png',
-  bio: '',
-  location: '',
-  role: '',
-  username: '',
-  phone: '',
-  coverImage:
-    'https://images.unsplash.com/photo-1518709268805-4e9042af2176?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1925&q=80',
-  skills: ['React', 'Typescript', 'python', 'ML', 'Tailwindcss', 'NodeJs'],
+  totalQuestions: 30,
   sessionsJoined: 24,
   ongoingSessions: 3,
   bookmarksSaved: 18,
-  totalQuestions: 30,
-  level: 8,
-  experience: 1250,
-  correctAnswers: 200,
 };
-
-const timelineQuestions = [
-  {
-    id: 't1',
-    title: 'How to optimize React performance with useMemo?',
-    status: 'ongoing' as const,
-    timeAgo: '2 min ago',
-    answerCount: 1,
-    upvotes: 5,
-  },
-  {
-    id: 't2',
-    title: 'Best practices for API error handling in Next.js',
-    status: 'answered' as const,
-    timeAgo: '15 min ago',
-    answerCount: 3,
-    upvotes: 12,
-  },
-  {
-    id: 't3',
-    title: 'TypeScript generic constraints explained',
-    status: 'closed' as const,
-    timeAgo: '1 hour ago',
-    answerCount: 8,
-    upvotes: 24,
-  },
-];
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null);
@@ -90,7 +45,7 @@ export default function ProfilePage() {
         setProfileImage(data?.profile_image_url || null);
       })
       .catch((error) => {
-        console.error(error?.response?.data || error);
+        console.error('Failed to fetch profile:', error?.response?.data || error);
       })
       .finally(() => {
         setIsProfileLoading(false);
@@ -102,35 +57,29 @@ export default function ProfilePage() {
       if (!updated) return;
 
       setProfile(updated);
-      if (updated?.cover_image_url) {
-        setCoverImage(updated.cover_image_url);
-      }
-      if (updated?.profile_image_url) {
-        setProfileImage(updated.profile_image_url);
-      }
+      if (updated?.cover_image_url) setCoverImage(updated.cover_image_url);
+      if (updated?.profile_image_url) setProfileImage(updated.profile_image_url);
     };
 
     window.addEventListener('profile-updated', onProfileUpdated);
-    return () => {
-      window.removeEventListener('profile-updated', onProfileUpdated);
-    };
+    return () => window.removeEventListener('profile-updated', onProfileUpdated);
   }, []);
 
-  const displayName =
+  // Computed display values
+  const displayName = 
     `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() ||
     profile?.username ||
-    userInfo.name;
-  const displayBio = profile?.bio || 'Add bio to your profile';
+    fallbackUserInfo.name;
+
+  const displayBio = profile?.bio || 'Add a bio to your profile';
   const displayRole = profile?.profession || 'Add profession to your profile';
-  const currentRole = profile?.profession || 'Add profession to your profile';
-  const displayLocation =
+  const displayLocation = 
     [profile?.city, profile?.country].filter(Boolean).join(', ') ||
     'Add location to your profile';
+
   const displaySkills: string[] = Array.isArray(profile?.tags)
     ? profile.tags
-        .map((tag: any) =>
-          typeof tag === 'string' ? tag : (tag?.name as string | undefined)
-        )
+        .map((tag: any) => (typeof tag === 'string' ? tag : tag?.name))
         .filter((name: string | undefined): name is string => Boolean(name))
     : [];
 
@@ -144,178 +93,161 @@ export default function ProfilePage() {
           ))}
         </div>
       ) : (
-      <>
-      {/* cover image section */}
-      <div className="relative h-[200px]  ">
-        <div className="w-full h-full ">
-          {coverImage ? (
-            <div className="relative w-full h-full rounded-t-md overflow-hidden bg-muted">
+        <div className="space-y-6">
+          {/* Cover Image Section */}
+          <div className="relative h-[240px] rounded-xl overflow-hidden bg-muted">
+            {coverImage ? (
               <img
                 src={coverImage}
-                alt="cover image"
-                className="block w-full h-full object-cover"
-                style={{ objectFit: 'cover' }}
+                alt="Cover"
+                className="w-full h-full object-cover"
               />
-              <div className="absolute top-4 right-4">
-                <UploadCoverImage onUploaded={setCoverImage} />
-              </div>
-            </div>
-          ) : (
-            <div className="w-full h-full rounded-t-md bg-primary flex justify-end p-4">
-            <UploadCoverImage onUploaded={setCoverImage} />
-          </div>
-          )}
-        </div>
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-primary/10 via-muted to-background" />
+            )}
 
-        {/* profile Card */}
-        <div className="  rounded-lg px-4 py-6 w-full border-b ">
-          <div className="absolute bottom-0  top-22 z-10 left-10 ">
-            <Avatar className="w-[150px] h-[150px] border-8 border-background">
-              <AvatarImage src={profileImage || userInfo.avatar} />
-              <AvatarFallback>{displayName.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <UploadProfileImage onUploaded={setProfileImage} />
-          </div>
-
-          <div className="flex justify-between">
-            <div className="pt-5  space-y-2">
-              <h1 className="text-2xl font-sans font-bold">{displayName}</h1>
-              <p className="text-md text-muted-foreground">{displayRole}</p>
-              <p className="text-md text-muted-foreground">{displayLocation}</p>
-              <div>
-                <h1 className="text-md py-2 font-medium flex items-center gap-2 text-foreground">
-                  Bio <Pen className="w-4 h-4" />
-                </h1>
-                <p className="text-md text-muted-foreground max-w-md leading-relaxed">
-                  {displayBio}
-                </p>
-              </div>
-              <div className="flex gap-2">
-               <EditProfile/> 
-                <Link href={'/settings'}>
-                  <Button
-                    variant={'outline'}
-                    className="border-primary border p-5 text-md text-primary rounded-full mt-2 shadow-xs "
-                  >
-                    Settings
-                  </Button>
-                </Link>
-              </div>
+            {/* Upload Cover Button */}
+            <div className="absolute top-4 right-4 z-20">
+              <UploadCoverImage onUploaded={setCoverImage} />
             </div>
-            <div className="flex flex-col gap-2 justify-between">
-              <div className="flex flex-col items-end gap-2">
-                <h1 className="font-sans text-md flex text-muted-foreground gap-2 w-fit">
-                  Current role <Briefcase className="w-4 h-4" />
-                </h1>
-                <h2 className="rounded-full bg-muted text-foreground text-sm p-2 font-sans capitalize font-medium px-2">
-                  {currentRole}
-                </h2>
-              </div>
-              <div className=" flex flex-col items-end gap-2">
-                <h1 className="capitalize flex gap-2 items-center text-muted-foreground">
-                  skills <Star className="w-4 h-4" />
-                </h1>
-                <div className="flex flex-wrap gap-2 items-">
-                  {displaySkills.length > 0 ? (
-                    displaySkills.map((skill: string, index: number) => (
-                      <div key={index}>
-                        <p className="bg-muted text-foreground p-2 text-sm w-fit rounded-full font-sans font-medium">
-                          {skill}
-                        </p>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground">No skills added yet</p>
-                  )}
+
+            {/* Profile Picture */}
+            <div className="absolute -bottom-16 left-6 z-20">
+              <div className="relative">
+                <Avatar className="w-[148px] h-[148px] border-[6px] border-background shadow-xl">
+                  <AvatarImage src={profileImage || fallbackUserInfo.avatar} />
+                  <AvatarFallback className="text-5xl font-medium">
+                    {displayName.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="absolute bottom-2 right-2">
+                  <UploadProfileImage onUploaded={setProfileImage} />
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="lg:col-span-2 space-y-6 mt-4">
-          {/*<Card className="shadow-none rounded-xl border-0 bg-white/95 p-2 ">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-warning" />
-                  Level Progress
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-md font-medium text-gray-600">Level {userInfo.level}</span>
-                    <span className="text-md text-gray-500">{userInfo.experience} / {nextLevelExp} XP</span>
+          {/* Profile Information */}
+          <div className="pt-16 px-6 lg:px-8">
+            <div className="flex flex-col lg:flex-row justify-between gap-6">
+              <div className="space-y-3">
+                <h1 className="text-3xl font-bold">{displayName}</h1>
+                <p className="text-lg text-muted-foreground">{displayRole}</p>
+                <p className="text-muted-foreground">{displayLocation}</p>
+
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="font-medium">Bio</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3">
-                    <div 
-                      className="bg-gradient-to-r from-orange-400 to-red-600 h-3 rounded-full transition-all duration-300"
-                      style={{ width: `${progressToNextLevel}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-md text-gray-500">
-                    {nextLevelExp - userInfo.experience} XP needed for next level
+                  <p className="text-muted-foreground max-w-2xl leading-relaxed">
+                    {displayBio}
                   </p>
                 </div>
+
+                <div className="flex gap-3 pt-2">
+                  <EditProfile />
+                  <Link href="/settings">
+                    <Button variant="outline" className="rounded-full">
+                      Settings
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Right Side Info */}
+              <div className="flex flex-col items-start lg:items-end gap-6">
+                <div>
+                  <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                    <Briefcase className="w-4 h-4" />
+                    <span className="font-medium">Current Role</span>
+                  </div>
+                  <p className="bg-muted px-4 py-2 rounded-full text-sm font-medium capitalize">
+                    {displayRole}
+                  </p>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                    <User className="w-4 h-4" />
+                    <span className="font-medium">Skills</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2 justify-start lg:justify-end">
+                    {displaySkills.length > 0 ? (
+                      displaySkills.map((skill, index) => (
+                        <span
+                          key={index}
+                          className="bg-muted text-foreground px-4 py-1.5 text-sm rounded-full font-medium"
+                        >
+                          {skill}
+                        </span>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No skills added yet</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Statistics Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-6">
+            <Card className="shadow-sm border border-border rounded-xl hover:shadow-md transition-shadow">
+              <CardContent className="p-6 text-center">
+                <BookOpen className="h-8 w-8 text-primary mx-auto mb-3" />
+                <h3 className="text-3xl font-bold">
+                  {profile?.totalQuestions || fallbackUserInfo.totalQuestions}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">Questions Asked</p>
               </CardContent>
             </Card>
-            */}
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 border-t p-4">
-            <Card className="shadow-xs border border-border rounded-xl bg-card hover:shadow-xl transition-shadow">
+            <Card className="shadow-sm border border-border rounded-xl hover:shadow-md transition-shadow">
               <CardContent className="p-6 text-center">
-                <div className="flex flex-col items-center">
-                  <BookOpen className="h-8 w-8 text-primary mb-2" />
-                  <h3 className="text-2xl font-bold text-foreground">
-                    {userInfo.totalQuestions}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">Questions Asked</p>
-                </div>
+                <User className="h-8 w-8 text-emerald-600 mx-auto mb-3" />
+                <h3 className="text-3xl font-bold">
+                  {fallbackUserInfo.sessionsJoined}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">Sessions Joined</p>
               </CardContent>
             </Card>
 
-            <Card className="shadow-xs border border-border rounded-xl bg-card hover:shadow-xl transition-shadow">
+            <Card className="shadow-sm border border-border rounded-xl hover:shadow-md transition-shadow">
               <CardContent className="p-6 text-center">
-                <div className="flex flex-col items-center">
-                  <User className="h-8 w-8 text-success mb-2" />
-                  <h3 className="text-2xl font-bold text-foreground">
-                    {userInfo.sessionsJoined || 24}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">Sessions Joined</p>
-                </div>
+                <Clock className="h-8 w-8 text-amber-600 mx-auto mb-3" />
+                <h3 className="text-3xl font-bold">
+                  {fallbackUserInfo.ongoingSessions}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">Ongoing Sessions</p>
               </CardContent>
             </Card>
 
-            <Card className="shadow-xs border border-border rounded-xl bg-card hover:shadow-xl transition-shadow">
+            <Card className="shadow-sm border border-border rounded-xl hover:shadow-md transition-shadow">
               <CardContent className="p-6 text-center">
-                <div className="flex flex-col items-center">
-                  <Clock className="h-8 w-8 text-warning mb-2" />
-                  <h3 className="text-2xl font-bold text-foreground">
-                    {userInfo.ongoingSessions || 3}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">Ongoing Sessions</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-xs border border-border rounded-xl bg-card hover:shadow-xl transition-shadow">
-              <CardContent className="p-6 text-center">
-                <div className="flex flex-col items-center">
-                  <Bookmark className="h-8 w-8 text-info mb-2" />
-                  <h3 className="text-2xl font-bold text-foreground">
-                    {userInfo.bookmarksSaved || 18}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">Bookmarks Saved</p>
-                </div>
+                <Bookmark className="h-8 w-8 text-blue-600 mx-auto mb-3" />
+                <h3 className="text-3xl font-bold">
+                  {fallbackUserInfo.bookmarksSaved}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">Bookmarks Saved</p>
               </CardContent>
             </Card>
           </div>
+
+          {/* Activity Sections */}
+          <div className="flex flex-col lg:flex-row gap-6 px-6">
+            <div className="flex-1">
+              <HistoryOfQuestions />
+            </div>
+            <div className="flex-1">
+              <RecentQuestionsTimelineProfile 
+                questions={[
+                  // You can make this dynamic later
+                ]} 
+              />
+            </div>
+          </div>
         </div>
-        <div className="flex flex-row-reverse gap-4 w-full pt-4 mx-auto border-t  max-w-6xl">
-          <HistoryOfQuestions />
-          <RecentQuestionsTimelineProfile questions={timelineQuestions} />
-        </div>
-      </div>
+      )}
     </div>
   );
 }
