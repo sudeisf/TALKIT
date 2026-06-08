@@ -17,6 +17,7 @@ db.sqlite3
 
 # Celery
 *.pid
+celerybeat-schedule*
 
 # IDE / OS
 .vscode/

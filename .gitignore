@@ -5,3 +5,28 @@ __pycache__/
 *.py[cod]
 
 chat_files/
+
+# Environment and Dependencies
+.venv/
+venv/
+env/
+node_modules/
+
+# OS and IDE files
+.DS_Store
+.idea/
+*.swp
+.cursor/
+
+# Agents and Skills
+.agents/
+skills-lock.json
+
+# Logs
+*.log
+
+# Ignore all Markdown files except README, GEMINI, and SKILL files
+*.md
+!README.md
+!GEMINI.md
+!SKILL.md
