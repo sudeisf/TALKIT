@@ -8,11 +8,25 @@ import SummaryCard from '@/components/learner/SummeryCards';
 import { SkeletonDashboard } from '@/components/ui/skeleton';
 import { useMinimumLoading } from '@/hooks/use-minimum-loading';
 import { useLearnerDashboardStatsQuery } from '@/query/questionMutation';
+import { getCurrentUser } from '@/lib/api/authApi';
 import { Clock, Bookmark, CheckCircle, MessageSquare } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function DashBoard() {
   const { data, isLoading } = useLearnerDashboardStatsQuery();
   const showSkeleton = useMinimumLoading(isLoading);
+  const [displayName, setDisplayName] = useState('there');
+
+  useEffect(() => {
+    getCurrentUser()
+      .then((user: { first_name?: string; username?: string }) => {
+        const name = user.first_name?.trim() || user.username?.trim();
+        if (name) setDisplayName(name);
+      })
+      .catch(() => {
+        // keep fallback greeting
+      });
+  }, []);
 
   if (showSkeleton) {
     return (
@@ -36,7 +50,7 @@ export default function DashBoard() {
 
   return (
     <div className="w-full max-w-6xl mx-auto min-h-screen bg-background text-foreground p-4 sm:p-6 lg:p-8">
-      <GreetingCard btnName="Ask Questions" name="sudeis" />
+      <GreetingCard btnName="Ask Questions" name={displayName} />
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-6">
         <SummaryCard
           percentage={questionsPostedChange}

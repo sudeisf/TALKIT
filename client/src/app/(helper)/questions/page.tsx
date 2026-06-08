@@ -13,6 +13,7 @@ import {
   useJoinQuestionMutation,
   useQuestionFeedQuery,
   useRecentActivityQuery,
+  useToggleBookmarkMutation,
   useVoteQuestionMutation,
 } from '@/query/questionMutation';
 import { Search } from 'lucide-react';
@@ -56,6 +57,7 @@ export default function QuestionsPage() {
     useRecentActivityQuery(100);
   const { mutateAsync: joinQuestion } = useJoinQuestionMutation();
   const { mutateAsync: voteQuestion } = useVoteQuestionMutation();
+  const { mutateAsync: toggleBookmark } = useToggleBookmarkMutation();
 
   const toRelative = (value: string) => {
     const date = new Date(value);
@@ -101,6 +103,7 @@ export default function QuestionsPage() {
             : question.my_vote === 'DOWN'
               ? ('down' as const)
               : null,
+        isBookmarked: question.is_bookmarked ?? false,
         contributors: (question.participants_preview || []).map((participant) => ({
           name: participant.name,
           avatar: participant.avatar || undefined,
@@ -187,7 +190,7 @@ export default function QuestionsPage() {
   );
 
   const handleTitleClick = (id: string) => {
-    console.log('Navigate to question:', id);
+    void handleContinueClick(id);
   };
 
   const handleContinueClick = async (id: string) => {
@@ -201,8 +204,14 @@ export default function QuestionsPage() {
     }
   };
 
-  const handleBookmarkToggle = (id: string, bookmarked: boolean) => {
-    console.log('Bookmark toggled:', id, bookmarked);
+  const handleBookmarkToggle = async (id: string) => {
+    try {
+      await toggleBookmark(Number(id));
+    } catch (error: unknown) {
+      const apiMessage = (error as { response?: { data?: { error?: string } } })
+        ?.response?.data?.error;
+      toast.error(apiMessage || 'Unable to update bookmark.');
+    }
   };
 
   const handleUpvote = async (id: string) => {

@@ -13,6 +13,27 @@ import {
 } from '@/lib/api/notificationsApi';
 import { joinQuestion } from '@/lib/api/questionApi';
 
+const getRoleFromCookie = (): string | null => {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(/(?:^|; )role=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : null;
+};
+
+const navigateAfterJoin = (
+  router: ReturnType<typeof useRouter>,
+  questionId: number,
+  sessionId: number | null | undefined
+) => {
+  const role = getRoleFromCookie();
+  if (role === 'learner') {
+    router.push(`/chat/${questionId}`);
+    return;
+  }
+  if (sessionId != null) {
+    router.push(`/sessions/${sessionId}`);
+  }
+};
+
 export interface Notification {
   id: string;
   type: 'message' | 'reminder' | 'achievement' | 'system' | 'study';
@@ -213,9 +234,7 @@ export function NotificationProvider({
                       joinQuestion(incoming.questionId)
                         .then((res) => {
                           const sessionId = (res as { session_id?: number }).session_id;
-                          if (sessionId != null) {
-                            router.push(`/sessions/${sessionId}`);
-                          }
+                          navigateAfterJoin(router, incoming.questionId!, sessionId);
                         })
                         .catch(() => {
                           toast.error('Could not join the session.');
@@ -314,9 +333,7 @@ export function NotificationProvider({
     async (questionId: number) => {
       const res = await joinQuestion(questionId);
       const sessionId = (res as { session_id?: number }).session_id;
-      if (sessionId != null) {
-        router.push(`/sessions/${sessionId}`);
-      }
+      navigateAfterJoin(router, questionId, sessionId);
     },
     [router]
   );

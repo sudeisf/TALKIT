@@ -11,10 +11,15 @@ import { Tag, TagsFilterSelect } from '@/components/learner/tags-filter-select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SkeletonListItem } from '@/components/ui/skeleton';
 import { useMinimumLoading } from '@/hooks/use-minimum-loading';
-import { useMyQuestionsQuery } from '@/query/questionMutation';
+import {
+  useMyQuestionsQuery,
+  useToggleBookmarkMutation,
+  useVoteQuestionMutation,
+} from '@/query/questionMutation';
 
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { toast } from 'sonner';
 
 const sampleTags: Tag[] = [
   { id: '1', label: 'React' },
@@ -66,6 +71,8 @@ export default function MyQuestionPage() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { data: myQuestions = [], isLoading } = useMyQuestionsQuery();
+  const { mutateAsync: voteQuestion } = useVoteQuestionMutation();
+  const { mutateAsync: toggleBookmark } = useToggleBookmarkMutation();
   const showSkeleton = useMinimumLoading(isLoading);
 
   const queryFromUrl = (searchParams.get('q') || '').trim();
@@ -149,35 +156,58 @@ export default function MyQuestionPage() {
     answerCount: 0,
     upvotes: question.upvotes,
     downvotes: question.downvotes,
+    userVote:
+      question.my_vote === 'UP'
+        ? ('up' as const)
+        : question.my_vote === 'DOWN'
+          ? ('down' as const)
+          : null,
+    isBookmarked: question.is_bookmarked ?? false,
     user: {
       name: 'you',
     },
   }));
 
   const handleTitleClick = (id: string) => {
-    console.log('Navigate to question:', id);
+    router.push(`/chat/${id}`);
   };
 
   const handleContinueClick = (id: string) => {
-    console.log('Continue question:', id);
+    router.push(`/chat/${id}`);
   };
 
-  const handleBookmarkToggle = (id: string, bookmarked: boolean) => {
-    console.log('Bookmark toggled:', id, bookmarked);
+  const handleBookmarkToggle = async (id: string) => {
+    try {
+      await toggleBookmark(Number(id));
+    } catch (error: unknown) {
+      const apiMessage = (error as { response?: { data?: { error?: string } } })
+        ?.response?.data?.error;
+      toast.error(apiMessage || 'Unable to update bookmark.');
+    }
   };
 
-  const handleUpvote = (id: string) => {
-    console.log('Upvote question:', id);
+  const handleUpvote = async (id: string) => {
+    try {
+      await voteQuestion({ questionId: Number(id), voteType: 'UP' });
+    } catch (error: unknown) {
+      const apiMessage = (error as { response?: { data?: { error?: string } } })
+        ?.response?.data?.error;
+      toast.error(apiMessage || 'Unable to apply upvote.');
+    }
   };
 
-  const handleDownvote = (id: string) => {
-    console.log('Downvote question:', id);
+  const handleDownvote = async (id: string) => {
+    try {
+      await voteQuestion({ questionId: Number(id), voteType: 'DOWN' });
+    } catch (error: unknown) {
+      const apiMessage = (error as { response?: { data?: { error?: string } } })
+        ?.response?.data?.error;
+      toast.error(apiMessage || 'Unable to apply downvote.');
+    }
   };
 
   const handleSortChange = (newSortBy: string) => {
     setSortBy(newSortBy);
-    console.log('Sort changed to:', newSortBy);
-    // Here you would implement the actual sorting logic
   };
 
   return (
@@ -229,6 +259,7 @@ export default function MyQuestionPage() {
                     <QuestionCard
                       key={question.id}
                       {...question}
+                      continueHref={`/chat/${question.id}`}
                       onTitleClick={handleTitleClick}
                       onContinueClick={handleContinueClick}
                       onBookmarkToggle={handleBookmarkToggle}

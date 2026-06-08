@@ -13,6 +13,7 @@ import {
   getRecentActivity,
   joinQuestion,
   modifyQuestionDescription,
+  toggleQuestionBookmark,
   voteQuestion,
 } from '@/lib/api/questionApi';
 import { CreateQuestionPayload, ModifyDescriptionPayload } from '@/types/question';
@@ -111,7 +112,24 @@ export const useVoteQuestionMutation = () => {
     mutationFn: ({ questionId, voteType }: { questionId: number; voteType: 'UP' | 'DOWN' }) =>
       voteQuestion(questionId, voteType),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['question-feed'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['question-feed'] }),
+        queryClient.invalidateQueries({ queryKey: ['my-questions'] }),
+      ]);
+    },
+  });
+};
+
+export const useToggleBookmarkMutation = () => {
+  return useMutation({
+    mutationKey: ['toggle-bookmark'],
+    mutationFn: (questionId: number) => toggleQuestionBookmark(questionId),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['question-feed'] }),
+        queryClient.invalidateQueries({ queryKey: ['my-questions'] }),
+        queryClient.invalidateQueries({ queryKey: ['chat-sessions'] }),
+      ]);
     },
   });
 };

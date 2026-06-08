@@ -3,7 +3,7 @@
 import UploadCoverImage from '@/components/coverImageUpload';
 import { EditProfile } from '@/components/EditProfile';
 import HistoryOfQuestions from '@/components/learner/QuestionHistory';
-import { RecentQuestionsTimelineProfile } from '@/components/learner/RecentActivityProfile';
+import { RecentQuestionsTimelineProfile } from '@/components/learner/RecentActitvityProfile';
 import UploadProfileImage from '@/components/ProfileImageEdit';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';

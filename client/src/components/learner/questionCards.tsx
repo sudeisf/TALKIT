@@ -44,6 +44,7 @@ interface QuestionCardProps {
   onBookmarkToggle?: (id: string, bookmarked: boolean) => void;
   onUpvote?: (id: string) => void;
   onDownvote?: (id: string) => void;
+  continueHref?: string;
 }
 
 const statusConfig = {
@@ -83,6 +84,7 @@ export function QuestionCard({
   onBookmarkToggle,
   onUpvote,
   onDownvote,
+  continueHref,
 }: QuestionCardProps) {
   const normalizeAvatarUrl = (url?: string | null) => {
     if (!url) return undefined;
@@ -102,6 +104,10 @@ export function QuestionCard({
     userVote
   );
   const [voteCount, setVoteCount] = useState(upvotes - downvotes);
+
+  useEffect(() => {
+    setBookmarked(isBookmarked);
+  }, [isBookmarked]);
 
   useEffect(() => {
     setCurrentVote(userVote);
@@ -268,7 +274,7 @@ export function QuestionCard({
           </div>
 
           <Link
-            href={'/'}
+            href={continueHref ?? (onContinueClick ? '#' : '/')}
             onClick={handleContinueClick}
             className="shrink-0 flex text-sm items-center gap-2 hover:text-primary"
           >

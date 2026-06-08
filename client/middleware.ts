@@ -4,8 +4,8 @@ import type { NextRequest } from 'next/server';
 const PUBLIC_PATHS = ['/login', '/register', '/complete-profile', '/api/auth'];
 
 const ROLE_DASHBOARD_MAP: Record<string, string> = {
-  learner: '/learner/dashboard',
-  helper: '/helper/dashboard',
+  learner: '/learner-dashboard',
+  helper: '/dashboard',
 };
 
 export function middleware(request: NextRequest) {

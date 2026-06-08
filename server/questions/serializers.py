@@ -78,6 +78,8 @@ class ModifiedQuestionDescriptionResponseSerializer(serializers.Serializer):
 
 class MyQuestionListSerializer(serializers.ModelSerializer):
     tags = serializers.SerializerMethodField()
+    my_vote = serializers.SerializerMethodField()
+    is_bookmarked = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
@@ -91,10 +93,28 @@ class MyQuestionListSerializer(serializers.ModelSerializer):
             'updated_at',
             'upvotes',
             'downvotes',
+            'my_vote',
+            'is_bookmarked',
         ]
 
     def get_tags(self, obj):
         return list(obj.tags.values_list('name', flat=True))
+
+    def get_my_vote(self, obj):
+        user = self.context.get('request').user
+        if user.is_authenticated:
+            try:
+                vote = obj.votes.get(user=user)
+                return vote.vote_type
+            except QuestionVote.DoesNotExist:
+                return None
+        return None
+
+    def get_is_bookmarked(self, obj):
+        user = self.context.get('request').user
+        if user.is_authenticated:
+            return obj.bookmarks.filter(user=user).exists()
+        return False
 
 
 class DashboardMetricSerializer(serializers.Serializer):
@@ -155,6 +175,7 @@ class QuestionListSerializer(serializers.ModelSerializer):
     participant_count = serializers.SerializerMethodField()
     tags = serializers.SerializerMethodField()
     my_vote = serializers.SerializerMethodField()
+    is_bookmarked = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
@@ -164,7 +185,7 @@ class QuestionListSerializer(serializers.ModelSerializer):
             'asked_by_profile_image_url', 'participants_preview', 'participants_extra_count',
             'is_full', 
             'am_i_joined', 'has_summary', 'participant_count', 'tags',
-            'upvotes', 'downvotes', 'my_vote'
+            'upvotes', 'downvotes', 'my_vote', 'is_bookmarked'
         ]
 
     def get_tags(self, obj):
@@ -247,4 +268,10 @@ class QuestionListSerializer(serializers.ModelSerializer):
             return vote.vote_type
         except QuestionVote.DoesNotExist:
             return None
-    
+
+    def get_is_bookmarked(self, obj):
+        user = self.context.get('request').user
+        if not user or not user.is_authenticated:
+            return False
+        return obj.bookmarks.filter(user=user).exists()
+

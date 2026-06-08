@@ -29,6 +29,8 @@ export interface MyQuestionItem {
   updated_at: string;
   upvotes: number;
   downvotes: number;
+  my_vote?: 'UP' | 'DOWN' | null;
+  is_bookmarked?: boolean;
 }
 
 export interface DashboardMetric {
@@ -101,6 +103,7 @@ export interface QuestionFeedItem {
   upvotes: number;
   downvotes: number;
   my_vote: 'UP' | 'DOWN' | null;
+  is_bookmarked?: boolean;
 }
 
 export interface RecentActivityItem {
