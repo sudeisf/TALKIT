@@ -150,7 +150,7 @@ export default function MyQuestionPage() {
     title: question.title,
     description: question.description,
     tags: question.tags,
-    status: question.status === 'searching' ? 'ongoing' : question.status,
+    status: question.status,
     createdDate: toRelative(question.created_at),
     lastActivity: toRelative(question.updated_at),
     answerCount: 0,

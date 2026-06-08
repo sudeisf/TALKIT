@@ -83,37 +83,58 @@ class RecentActivityView(APIView):
 	permission_classes = [permissions.IsAuthenticated]
 
 	def get(self, request):
+		from activities.models import UserActivity
 		try:
 			limit = int(request.query_params.get("limit", 10))
 		except (TypeError, ValueError):
 			limit = 10
 
-		questions = (
-			Question.objects.filter(
-				Q(asked_by=request.user)
-				| Q(invites__expert=request.user, invites__status='ACCEPTED')
-				| Q(chat_session__participants=request.user)
-				| Q(votes__user=request.user)
-			)
-			.annotate(answer_count=Count("chat_session__messages", distinct=True))
-			.order_by("-updated_at")
-			.distinct()[:limit]
+		activities = (
+			UserActivity.objects.filter(user=request.user)
+			.select_related('content_type')
+			.order_by("-created_at")[:limit]
 		)
 
 		now = timezone.now()
 		data = []
-		for question in questions:
-			time_ago = timesince(question.updated_at, now).split(",")[0] + " ago"
+		for act in activities:
+			time_ago = timesince(act.created_at, now).split(",")[0] + " ago"
 			data.append(
 				{
-					"id": question.id,
-					"title": question.title,
-					"status": question.status,
+					"id": act.id,
+					"type": act.activity_type,
+					"description": act.description,
 					"timeAgo": time_ago,
-					"answerCount": question.answer_count,
-					"upvotes": question.upvotes,
+					"objectId": act.object_id,
 				}
 			)
+
+		# Fallback to questions if no UserActivity is found (for backward compatibility during migration)
+		if not data:
+			questions = (
+				Question.objects.filter(
+					Q(asked_by=request.user)
+					| Q(invites__expert=request.user, invites__status='ACCEPTED')
+					| Q(chat_session__participants=request.user)
+					| Q(votes__user=request.user)
+				)
+				.annotate(answer_count=Count("chat_session__messages", distinct=True))
+				.order_by("-updated_at")
+				.distinct()[:limit]
+			)
+
+			for question in questions:
+				time_ago = timesince(question.updated_at, now).split(",")[0] + " ago"
+				data.append(
+					{
+						"id": question.id,
+						"title": question.title,
+						"type": "question_activity",
+						"timeAgo": time_ago,
+						"answerCount": question.answer_count,
+						"upvotes": question.upvotes,
+					}
+				)
 
 		return Response({"items": data})
 
@@ -739,6 +760,18 @@ class ToggleBookmarkView(APIView):
 
 		Bookmark.objects.create(user=request.user, question=question)
 		return Response({"is_favorite": True}, status=status.HTTP_200_OK)
+
+class BookmarksListView(generics.ListAPIView):
+	serializer_class = QuestionListSerializer
+	permission_classes = [permissions.IsAuthenticated]
+
+	def get_queryset(self):
+		return (
+			Question.objects.filter(bookmarks__user=self.request.user)
+			.select_related('asked_by')
+			.prefetch_related('tags', 'chat_session__participants')
+			.order_by('-bookmarks__created_at')
+		)
     
 class PublicQuestionListView(generics.ListAPIView):
     queryset = (

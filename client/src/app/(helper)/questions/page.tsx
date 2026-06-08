@@ -90,7 +90,7 @@ export default function QuestionsPage() {
         title: question.title,
         description: question.description,
         tags,
-        status: question.status === 'searching' ? 'ongoing' : question.status,
+        status: question.status,
         createdAt: question.created_at,
         createdDate: toRelative(question.created_at),
         lastActivity: toRelative(question.created_at),

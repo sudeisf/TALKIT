@@ -20,6 +20,7 @@ import { useEffect, useState } from 'react';
 import { getCurrentUser } from '@/lib/api/authApi';
 import { SkeletonListItem, SkeletonProfileHeader } from '@/components/ui/skeleton';
 import { useMinimumLoading } from '@/hooks/use-minimum-loading';
+import { useLearnerDashboardStatsQuery, useRecentActivityQuery } from '@/query/questionMutation';
 
 const fallbackUserInfo = {
   name: 'User',
@@ -35,6 +36,8 @@ export default function ProfilePage() {
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(true);
+  const { data: stats } = useLearnerDashboardStatsQuery();
+  const { data: recentActivity } = useRecentActivityQuery(10);
   const showSkeleton = useMinimumLoading(isProfileLoading);
 
   useEffect(() => {
@@ -196,7 +199,7 @@ export default function ProfilePage() {
               <CardContent className="p-6 text-center">
                 <BookOpen className="h-8 w-8 text-primary mx-auto mb-3" />
                 <h3 className="text-3xl font-bold">
-                  {profile?.totalQuestions || fallbackUserInfo.totalQuestions}
+                  {stats?.questions_posted.value || 0}
                 </h3>
                 <p className="text-sm text-muted-foreground mt-1">Questions Asked</p>
               </CardContent>
@@ -206,9 +209,9 @@ export default function ProfilePage() {
               <CardContent className="p-6 text-center">
                 <User className="h-8 w-8 text-emerald-600 mx-auto mb-3" />
                 <h3 className="text-3xl font-bold">
-                  {fallbackUserInfo.sessionsJoined}
+                  {stats?.problems_solved.value || 0}
                 </h3>
-                <p className="text-sm text-muted-foreground mt-1">Sessions Joined</p>
+                <p className="text-sm text-muted-foreground mt-1">Problems Solved</p>
               </CardContent>
             </Card>
 
@@ -216,9 +219,9 @@ export default function ProfilePage() {
               <CardContent className="p-6 text-center">
                 <Clock className="h-8 w-8 text-amber-600 mx-auto mb-3" />
                 <h3 className="text-3xl font-bold">
-                  {fallbackUserInfo.ongoingSessions}
+                  {stats?.active_sessions.value || 0}
                 </h3>
-                <p className="text-sm text-muted-foreground mt-1">Ongoing Sessions</p>
+                <p className="text-sm text-muted-foreground mt-1">Active Sessions</p>
               </CardContent>
             </Card>
 
@@ -226,9 +229,9 @@ export default function ProfilePage() {
               <CardContent className="p-6 text-center">
                 <Bookmark className="h-8 w-8 text-blue-600 mx-auto mb-3" />
                 <h3 className="text-3xl font-bold">
-                  {fallbackUserInfo.bookmarksSaved}
+                  {stats?.saved_summaries.value || 0}
                 </h3>
-                <p className="text-sm text-muted-foreground mt-1">Bookmarks Saved</p>
+                <p className="text-sm text-muted-foreground mt-1">Saved Summaries</p>
               </CardContent>
             </Card>
           </div>
@@ -240,9 +243,7 @@ export default function ProfilePage() {
             </div>
             <div className="flex-1">
               <RecentQuestionsTimelineProfile 
-                questions={[
-                  // You can make this dynamic later
-                ]} 
+                questions={recentActivity?.items || []} 
               />
             </div>
           </div>

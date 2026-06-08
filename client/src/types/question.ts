@@ -108,11 +108,15 @@ export interface QuestionFeedItem {
 
 export interface RecentActivityItem {
   id: number;
-  title: string;
-  status: 'searching' | 'ongoing' | 'answered' | 'closed';
+  type: string;
+  description: string;
   timeAgo: string;
-  answerCount: number;
-  upvotes: number;
+  objectId?: number;
+  // Legacy fields for backward compatibility/fallback
+  title?: string;
+  status?: 'searching' | 'ongoing' | 'answered' | 'closed';
+  answerCount?: number;
+  upvotes?: number;
 }
 
 export interface RecentActivityResponse {

@@ -11,6 +11,7 @@ import {
   getMyQuestions,
   getQuestionFeed,
   getRecentActivity,
+  getBookmarks,
   joinQuestion,
   modifyQuestionDescription,
   toggleQuestionBookmark,
@@ -96,6 +97,13 @@ export const useRecentActivityQuery = (limit = 8) => {
   });
 };
 
+export const useBookmarksQuery = () => {
+  return useQuery({
+    queryKey: ['bookmarks'],
+    queryFn: getBookmarks,
+  });
+};
+
 export const useJoinQuestionMutation = () => {
   return useMutation({
     mutationKey: ['join-question'],
@@ -129,6 +137,7 @@ export const useToggleBookmarkMutation = () => {
         queryClient.invalidateQueries({ queryKey: ['question-feed'] }),
         queryClient.invalidateQueries({ queryKey: ['my-questions'] }),
         queryClient.invalidateQueries({ queryKey: ['chat-sessions'] }),
+        queryClient.invalidateQueries({ queryKey: ['bookmarks'] }),
       ]);
     },
   });

@@ -117,6 +117,13 @@ export const getRecentActivity = async (limit = 8) => {
   return response.data;
 };
 
+export const getBookmarks = async () => {
+  const response = await API.get<QuestionFeedItem[]>('/questions/bookmarks/', {
+    withCredentials: true,
+  });
+  return response.data;
+};
+
 export const joinQuestion = async (questionId: number) => {
   const response = await API.post<JoinQuestionResponse>(
     `/questions/${questionId}/join/`,

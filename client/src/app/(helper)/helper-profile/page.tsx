@@ -25,61 +25,14 @@ import {
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { getCurrentUser } from '@/lib/api/authApi';
-import { useHelperProfileOverviewQuery } from '@/query/questionMutation';
-
-const userInfo = {
-  name: 'Sudeis Fedlu',
-  email: 'sudeisfed@gmail.com',
-  avatar: 'https://github.com/shadcn.png',
-  bio: 'Passionate learner focused on mastering programming and technology. Always eager to explore new concepts and improve my skills.',
-  location: 'Addis Ababa, Ethiopia',
-  role: 'Software engineer',
-  username: 'sudeisfed',
-  phone: '+251 912 345 678',
-  coverImage:
-    'https://images.unsplash.com/photo-1518709268805-4e9042af2176?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1925&q=80',
-  skills: ['React', 'Typescript', 'python', 'ML', 'Tailwindcss', 'NodeJs'],
-  sessionsJoined: 24,
-  ongoingSessions: 3,
-  avargeResponseTime: 3.2,
-  HelpedLearners: 30,
-  level: 8,
-  experience: 1250,
-  correctAnswers: 200,
-};
-
-const timelineQuestions = [
-  {
-    id: 't1',
-    title: 'How to optimize React performance with useMemo?',
-    status: 'ongoing' as const,
-    timeAgo: '2 min ago',
-    answerCount: 1,
-    upvotes: 5,
-  },
-  {
-    id: 't2',
-    title: 'Best practices for API error handling in Next.js',
-    status: 'answered' as const,
-    timeAgo: '15 min ago',
-    answerCount: 3,
-    upvotes: 12,
-  },
-  {
-    id: 't3',
-    title: 'TypeScript generic constraints explained',
-    status: 'closed' as const,
-    timeAgo: '1 hour ago',
-    answerCount: 8,
-    upvotes: 24,
-  },
-];
+import { useHelperProfileOverviewQuery, useRecentActivityQuery } from '@/query/questionMutation';
 
 export default function HelperProfilePage() {
   const [profile, setProfile] = useState<any>(null);
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const { data: overview } = useHelperProfileOverviewQuery();
+  const { data: recentActivity } = useRecentActivityQuery(10);
 
   useEffect(() => {
     getCurrentUser()
@@ -302,7 +255,7 @@ export default function HelperProfilePage() {
         </div>
         <div className="flex flex-row-reverse gap-4 w-full pt-4 mx-auto border-t border-border max-w-6xl">
           <HistoryOfQuestions />
-          <RecentQuestionsTimelineProfile questions={timelineQuestions} />
+          <RecentQuestionsTimelineProfile questions={recentActivity?.items || []} />
         </div>
       </div>
     </div>

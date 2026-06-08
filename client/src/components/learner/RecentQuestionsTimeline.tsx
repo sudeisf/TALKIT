@@ -1,6 +1,6 @@
 'use client';
 
-import { Clock, MessageCircle, TrendingUp } from 'lucide-react';
+import { Clock, MessageCircle, TrendingUp, Bookmark, UserPlus, HelpCircle } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -10,19 +10,11 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-
-interface TimelineQuestion {
-  id: string;
-  title: string;
-  status: 'ongoing' | 'answered' | 'closed';
-  timeAgo: string;
-  answerCount: number;
-  upvotes: number;
-}
+import { RecentActivityItem } from '@/types/question';
 
 interface RecentQuestionsTimelineProps {
-  questions: TimelineQuestion[];
-  allQuestions?: TimelineQuestion[];
+  questions: RecentActivityItem[];
+  allQuestions?: RecentActivityItem[];
 }
 
 export function RecentQuestionsTimeline({
@@ -31,26 +23,34 @@ export function RecentQuestionsTimeline({
 }: RecentQuestionsTimelineProps) {
   const modalQuestions = allQuestions ?? questions;
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ongoing':
-        return 'bg-info/10 text-info border-info/20';
-      case 'answered':
-        return 'bg-success/10 text-success dark:bg-success/15 dark:text-success';
-      case 'closed':
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
+  const getActivityIcon = (type: string) => {
+    if (!type) return <Clock className="w-3 h-3" />;
+    switch (type) {
+      case 'question_asked':
+        return <HelpCircle className="w-3 h-3" />;
+      case 'helper_joined':
+        return <UserPlus className="w-3 h-3" />;
+      case 'bookmark_added':
+        return <Bookmark className="w-3 h-3" />;
+      case 'upvote_given':
+        return <TrendingUp className="w-3 h-3" />;
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
+        return <Clock className="w-3 h-3" />;
     }
   };
 
+  const getActivityLabel = (type: string) => {
+    if (!type) return 'Activity';
+    return type.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+  };
+
   const renderActivityItem = (
-    question: TimelineQuestion,
+    item: RecentActivityItem,
     index: number,
     isLast: boolean,
     isModal = false
   ) => (
-    <div key={`${isModal ? 'modal' : 'timeline'}-${question.id}-${index}`} className="relative">
+    <div key={`${isModal ? 'modal' : 'timeline'}-${item.id}-${index}`} className="relative">
       {!isLast && (
         <div
           className={`absolute left-4 top-8 w-px ${isModal ? 'h-14 bg-border/50' : 'h-16 bg-border'}`}
@@ -62,34 +62,24 @@ export function RecentQuestionsTimeline({
       <div className="ml-8 pb-4">
         <div className="flex items-center gap-2 mb-2">
           <span
-            className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(question.status)}`}
+            className={`px-2 py-1 text-[10px] font-medium rounded-full flex items-center gap-1 bg-white/20 text-white`}
           >
-            {question.status}
+            {getActivityIcon(item.type)}
+            {getActivityLabel(item.type)}
           </span>
           <div className={`flex items-center text-xs ${isModal ? 'text-muted-foreground' : 'text-primary-foreground'}`}>
             <Clock className="w-3 h-3 mr-1" />
-            {question.timeAgo}
+            {item.timeAgo}
           </div>
         </div>
 
         <h4
-          className={`text-sm font-medium leading-tight mb-3 transition-colors ${
-            isModal ? 'text-foreground hover:text-primary' : 'text-primary-foreground hover:text-primary'
+          className={`text-sm font-medium leading-tight mb-1 transition-colors ${
+            isModal ? 'text-foreground' : 'text-primary-foreground'
           }`}
         >
-          {question.title}
+          {item.description || item.title}
         </h4>
-
-        <div className={`flex items-center gap-4 text-xs ${isModal ? 'text-muted-foreground' : 'text-primary-foreground'}`}>
-          <div className="flex items-center">
-            <MessageCircle className="w-3 h-3 mr-1" />
-            {question.answerCount} answers
-          </div>
-          <div className="flex items-center">
-            <TrendingUp className="w-3 h-3 mr-1" />
-            {question.upvotes} upvotes
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -99,13 +89,13 @@ export function RecentQuestionsTimeline({
       <div className="mb-6">
         <h3 className="text-lg text-primary-foreground font-semibold mb-2">Recent Activity</h3>
         <p className="text-sm text-primary-foreground">
-          Latest questions and updates
+          Latest updates from your journey
         </p>
       </div>
 
       <div className="space-y-6">
-        {questions.map((question, index) =>
-          renderActivityItem(question, index, index === questions.length - 1)
+        {questions.map((item, index) =>
+          renderActivityItem(item, index, index === questions.length - 1)
         )}
       </div>
 
@@ -121,16 +111,16 @@ export function RecentQuestionsTimeline({
               <DialogHeader>
                 <DialogTitle>All Activities</DialogTitle>
                 <DialogDescription>
-                  Complete timeline of your recent question-related activities.
+                  Complete timeline of your recent activities.
                 </DialogDescription>
               </DialogHeader>
 
               <ScrollArea className="max-h-[65vh] pr-3">
                 <div className="space-y-4">
                   {modalQuestions.length > 0 ? (
-                    modalQuestions.map((question, index) =>
+                    modalQuestions.map((item, index) =>
                       renderActivityItem(
-                        question,
+                        item,
                         index,
                         index === modalQuestions.length - 1,
                         true

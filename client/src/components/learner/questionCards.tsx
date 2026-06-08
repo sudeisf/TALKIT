@@ -26,7 +26,7 @@ interface QuestionCardProps {
   }>;
   additionalContributors?: number;
   tags: string[];
-  status: 'ongoing' | 'answered' | 'closed';
+  status: 'searching' | 'ongoing' | 'answered' | 'closed';
   createdDate: string;
   lastActivity: string;
   answerCount: number;
@@ -48,6 +48,10 @@ interface QuestionCardProps {
 }
 
 const statusConfig = {
+  searching: {
+    label: 'Searching',
+    className: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+  },
   ongoing: {
     label: 'Ongoing',
     className: 'bg-info/10 text-info border-info/20',
