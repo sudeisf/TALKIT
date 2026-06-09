@@ -1,16 +1,17 @@
+from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny,IsAuthenticated
 from rest_framework.authentication import SessionAuthentication
 from .serilizers import (
       RegisterUserSerilizer , LoginSerializer 
         ,EmailVerifySerilizer ,OtpVerifySerializer, SetRoleSerializer, reset_password_serializer, ProfileSerializer,
-        ProfileImageUploadSerializer, CoverImageUploadSerializer
+        ProfileImageUploadSerializer, CoverImageUploadSerializer, UserTagSerializer
       )
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import login , logout , get_user_model
 import random
-from .models import Otp
+from .models import Otp, Tag
 from .services import send_OTP_To_Email
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -55,6 +56,12 @@ class CsrfExemptSessionAuthentication(SessionAuthentication):
 
 
 @method_decorator(csrf_exempt,name='dispatch')   
+class TagListView(generics.ListAPIView):
+    queryset = Tag.objects.all().order_by('name')
+    serializer_class = UserTagSerializer
+    permission_classes = [AllowAny]
+
+
 class RegisterView(APIView):
       permission_classes = [AllowAny]
       authentication_classes = [] 

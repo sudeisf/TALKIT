@@ -16,9 +16,39 @@ from urllib3 import request
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 import google.genai as genai
-
+from .tasks import summarize_chat_session, vectorize_question
 from .serializers import (
 	ModifyQuestionDescriptionSerializer,
+...
+from activities.models import UserActivity
+
+class CloseSessionView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, question_id):
+        question = get_object_or_404(Question, id=question_id)
+
+        if question.asked_by != request.user:
+            return Response({"error": "Only the question asker can close the session."}, status=403)
+
+        if question.status == 'closed':
+            return Response({"error": "Session is already closed."}, status=400)
+
+        question.status = 'closed'
+        question.save()
+
+        UserActivity.objects.create(
+            user=request.user,
+            activity_type='session_closed',
+            description=f'Closed session for question: {question.title}',
+            content_object=question
+        )
+
+        chat_session = getattr(question, 'chat_session', None)
+        if chat_session:
+            summarize_chat_session.delay(chat_session.id)
+
+        return Response({"message": "Session closed and summary generation triggered."}, status=200)
 	ModifiedQuestionDescriptionResponseSerializer,
 	LearnerDashboardStatsSerializer,
 	MyQuestionListSerializer,

@@ -2,6 +2,7 @@ import { Button } from '../ui/button';
 import Image from 'next/image';
 import avatar from '../../../public/svg/cool-guy.svg';
 import AskQuestion from './AskQuestionDialog';
+import Link from 'next/link';
 
 interface props {
   btnName: string;
@@ -20,9 +21,11 @@ export default function GreetingCard({ btnName, name }: props) {
         </p>
 
         {btnName === 'Start Helping' ? (
-          <Button className="bg-white text-black rounded-sm w-1/3 hover:bg-accent">
-            {btnName}
-          </Button>
+          <Link href="/questions" className="w-1/3">
+            <Button className="bg-white text-black rounded-sm w-full hover:bg-accent">
+              {btnName}
+            </Button>
+          </Link>
         ) : (
           <AskQuestion
             btnChild={

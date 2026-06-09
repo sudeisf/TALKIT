@@ -400,7 +400,6 @@ export function MessageInput({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    console.log('Selected file:', file);
   };
 
   const handleSendText = () => {
@@ -415,7 +414,6 @@ export function MessageInput({
   };
 
   const handleVoiceRecordingComplete = (audioBlob: Blob) => {
-    console.log('Voice recording complete, blob:', audioBlob);
     onVoiceMessage?.(audioBlob);
     setIsRecording(false); // back to normal input UI
   };

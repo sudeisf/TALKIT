@@ -1,5 +1,6 @@
 'use client';
 
+import AskQuestion from '@/components/learner/AskQuestionDialog';
 import { Button } from '@/components/ui/button';
 import { MessageCircle } from 'lucide-react';
 
@@ -20,12 +21,16 @@ export default function DefaultInterfaceForChat() {
           see any, create a new one and start connecting
         </p>
 
-        <Button
-          variant={'outline'}
-          className="px-4 py-2 mt-2 rounded-sm text-primary border-1 shadow-2xs  transition-all "
-        >
-          Ask and Start Session
-        </Button>
+        <AskQuestion
+          btnChild={
+            <Button
+              variant={'outline'}
+              className="px-4 py-2 mt-2 rounded-sm text-primary border-1 shadow-2xs  transition-all "
+            >
+              Ask and Start Session
+            </Button>
+          }
+        />
       </div>
     </div>
   );

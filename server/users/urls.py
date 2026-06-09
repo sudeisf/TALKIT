@@ -1,9 +1,10 @@
 from django.urls import path
 from .views import( LoginView , RegisterView ,LogoutView , EmailVerificationView , OTPVerifyVIew , NewPasswordChangeView ,
                    GoogleLoginAPIView, GithubLoginAPIView , SetUserRoleView, ProfileView,
-                   ProfileImageUploadView, CoverImageUploadView
+                   ProfileImageUploadView, CoverImageUploadView, TagListView
 )
 urlpatterns = [
+    path("tags/", TagListView.as_view(), name="tag-list"),
     path("auth/register/", RegisterView.as_view(), name="register"),
     path("auth/login/", LoginView.as_view(), name="login"),
     path("logout/", LogoutView.as_view(), name="logout"),

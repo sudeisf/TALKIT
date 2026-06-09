@@ -2,7 +2,8 @@
 
 import * as React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { X } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
+import { useTagsQuery } from '@/query/questionMutation';
 
 import {
   Select,
@@ -13,42 +14,38 @@ import {
   SelectTrigger,
 } from '@/components/ui/select';
 
-export interface Tag {
-  id: string;
-  label: string;
-}
-
 interface QuestionTagsProps {
   value?: string[];
   onChange?: (tags: string[]) => void;
 }
 
-const sampleTags: Tag[] = [
-  { id: '1', label: 'React' },
-  { id: '2', label: 'Next.js' },
-  { id: '3', label: 'TypeScript' },
-  { id: '4', label: 'Django' },
-  { id: '5', label: 'Laravel' },
-];
-
 export function QuestionTags({ value = [], onChange }: QuestionTagsProps) {
-  const handleAdd = (id: string) => {
-    const tag = sampleTags.find((t) => t.id === id);
-    if (tag && !value.includes(tag.label)) {
-      onChange?.([...value, tag.label]);
+  const { data: tags, isLoading } = useTagsQuery();
+
+  const handleAdd = (name: string) => {
+    if (!value.includes(name)) {
+      onChange?.([...value, name]);
     }
   };
 
-  const handleRemove = (label: string) => {
-    onChange?.(value.filter((tagLabel) => tagLabel !== label));
+  const handleRemove = (name: string) => {
+    onChange?.(value.filter((tag) => tag !== name));
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 text-muted-foreground text-sm">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Loading tags...
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-2">
       {/* Select dropdown */}
       <Select onValueChange={handleAdd}>
         <SelectTrigger className="w-[200px]">
-          {/* Instead of showing tag name, show count */}
           <span>
             {value.length > 0 ? `Selected (${value.length})` : 'Select tags'}
           </span>
@@ -56,11 +53,11 @@ export function QuestionTags({ value = [], onChange }: QuestionTagsProps) {
         <SelectContent>
           <SelectGroup>
             <SelectLabel>Available Tags</SelectLabel>
-            {sampleTags
-              .filter((tag) => !value.includes(tag.label))
-              .map((tag) => (
-                <SelectItem key={tag.id} value={tag.id}>
-                  {tag.label}
+            {tags
+              ?.filter((tag: any) => !value.includes(tag.name))
+              .map((tag: any) => (
+                <SelectItem key={tag.id} value={tag.name}>
+                  {tag.name}
                 </SelectItem>
               ))}
           </SelectGroup>

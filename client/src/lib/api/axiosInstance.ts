@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://localhost:8000', // Update with your actual URL
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
   withCredentials: true, // <--- CRITICAL: Ensures cookies are sent/received
 });
 

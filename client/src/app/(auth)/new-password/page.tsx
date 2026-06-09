@@ -49,7 +49,6 @@ export default function NewPassword() {
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
     const data = {
       new_password: values.password,
       confirm_password: values.confirPassword,

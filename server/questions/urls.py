@@ -16,12 +16,14 @@ from .views import (
     VoteQuestionView,
     ToggleBookmarkView,
     BookmarksListView,
+    CloseSessionView,
 )
 
 urlpatterns = [
     path("create/", CreateQuestionView.as_view(), name="create-question"),
     path("my/", MyQuestionsListView.as_view(), name="my-questions"),
     path("bookmarks/", BookmarksListView.as_view(), name="bookmarks"),
+    path("<int:question_id>/close/", CloseSessionView.as_view(), name="close-session"),
     path("helper-dashboard-stats/", HelperDashboardStatsView.as_view(), name="helper-dashboard-stats"),
     path("learner-dashboard-stats/", LearnerDashboardStatsView.as_view(), name="learner-dashboard-stats"),
     path("helper-profile-overview/", HelperProfileOverviewView.as_view(), name="helper-profile-overview"),

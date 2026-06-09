@@ -1,13 +1,14 @@
 'use client';
 
 import {
-  Home,
+  LayoutDashboard,
   Inbox,
   Bookmark,
   CircleQuestionMark,
   LogOut,
   Bell,
   Settings,
+  Briefcase,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -24,42 +25,47 @@ import logo from './../../public/svg/logo.svg';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { logoutUser } from '@/lib/api/authApi';
-import { useAppDispatch } from '@/redux/hooks';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { action as authAction } from '@/redux/slice/authSlice';
-const items = [
-  {
-    title: 'Dashboard',
-    url: '/learner-dashboard',
-    icon: Home,
-  },
-  {
-    title: 'My Questions',
-    url: '/my-questions',
-    icon: CircleQuestionMark,
-  },
-  {
-    title: 'Active Chats',
-    url: '/chat',
-    icon: Inbox,
-  },
-  {
-    title: 'Notifications',
-    url: '/notifications',
-    icon: Bell,
-  },
-  {
-    title: 'Bookmarks',
-    url: '/bookmarks',
-    icon: Bookmark,
-  },
-];
 
 export function AppSidebar() {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const role = useAppSelector((state) => state.auth.user?.role);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const items = useMemo(() => {
+    const isHelper = role === 'helper';
+    return [
+      {
+        title: 'Dashboard',
+        url: isHelper ? '/dashboard' : '/learner-dashboard',
+        icon: LayoutDashboard,
+      },
+      {
+        title: isHelper ? 'Browse Questions' : 'My Questions',
+        url: isHelper ? '/questions' : '/my-questions',
+        icon: isHelper ? Briefcase : CircleQuestionMark,
+      },
+      {
+        title: 'Active Chats',
+        url: '/chat',
+        icon: Inbox,
+      },
+      {
+        title: 'Notifications',
+        url: '/notifications',
+        icon: Bell,
+      },
+      {
+        title: 'Bookmarks',
+        url: '/bookmarks',
+        icon: Bookmark,
+      },
+    ];
+  }, [role]);
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
@@ -118,7 +124,7 @@ export function AppSidebar() {
         <SidebarFooter className="p-6 ml-2 group-data-[collapsible=icon]:p-3 group-data-[collapsible=icon]:ml-0 group-data-[collapsible=icon]:space-y-3">
           <Link
             className="flex items-center gap-2 group-data-[collapsible=icon]:h-[2.65rem] group-data-[collapsible=icon]:w-[2.65rem] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-xl group-data-[collapsible=icon]:p-0 hover:bg-sidebar-accent"
-            href={'/settings'}
+            href={role === 'helper' ? '/helper-settings' : '/settings'}
           >
             <Settings className="w-4 h-4 group-data-[collapsible=icon]:w-[1.3rem] group-data-[collapsible=icon]:h-[1.3rem]" />
             <span className="group-data-[collapsible=icon]:hidden">Settings</span>

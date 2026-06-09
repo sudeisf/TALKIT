@@ -4,7 +4,6 @@ import { DateRangePicker } from '@/components/learner/date-range-picker';
 import { QuestionCard } from '@/components/learner/questionCards';
 import { QuestionCounterSorter } from '@/components/learner/questionCount';
 import QuestionSearchBar from '@/components/learner/QuestionSearchBar';
-import { PaginationDemo } from '@/components/learner/QuestionsPaginations';
 import { RecentQuestionsTimeline } from '@/components/learner/RecentQuestionsTimeline';
 import { SelectedTagsDisplay } from '@/components/learner/selected-tag-display';
 import { Tag, TagsFilterSelect } from '@/components/learner/tags-filter-select';
@@ -13,55 +12,15 @@ import { SkeletonListItem } from '@/components/ui/skeleton';
 import { useMinimumLoading } from '@/hooks/use-minimum-loading';
 import {
   useMyQuestionsQuery,
+  useRecentActivityQuery,
+  useTagsQuery,
   useToggleBookmarkMutation,
   useVoteQuestionMutation,
 } from '@/query/questionMutation';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
-
-const sampleTags: Tag[] = [
-  { id: '1', label: 'React' },
-  { id: '2', label: 'TypeScript' },
-  { id: '3', label: 'Next.js' },
-  { id: '4', label: 'Tailwind CSS' },
-  { id: '5', label: 'JavaScript' },
-  { id: '6', label: 'Node.js' },
-  { id: '7', label: 'Python' },
-  { id: '8', label: 'Design' },
-  { id: '9', label: 'UI/UX' },
-  { id: '10', label: 'Frontend' },
-  { id: '11', label: 'Backend' },
-  { id: '12', label: 'Database' },
-];
-
-const timelineQuestions = [
-  {
-    id: 't1',
-    title: 'How to optimize React performance with useMemo?',
-    status: 'ongoing' as const,
-    timeAgo: '2 min ago',
-    answerCount: 1,
-    upvotes: 5,
-  },
-  {
-    id: 't2',
-    title: 'Best practices for API error handling in Next.js',
-    status: 'answered' as const,
-    timeAgo: '15 min ago',
-    answerCount: 3,
-    upvotes: 12,
-  },
-  {
-    id: 't3',
-    title: 'TypeScript generic constraints explained',
-    status: 'closed' as const,
-    timeAgo: '1 hour ago',
-    answerCount: 8,
-    upvotes: 24,
-  },
-];
 
 export default function MyQuestionPage() {
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
@@ -70,10 +29,21 @@ export default function MyQuestionPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  
   const { data: myQuestions = [], isLoading } = useMyQuestionsQuery();
+  const { data: recentActivity, isLoading: isRecentLoading } = useRecentActivityQuery(10);
+  const { data: allTags = [] } = useTagsQuery();
+  
   const { mutateAsync: voteQuestion } = useVoteQuestionMutation();
   const { mutateAsync: toggleBookmark } = useToggleBookmarkMutation();
   const showSkeleton = useMinimumLoading(isLoading);
+
+  const availableTags = useMemo(() => {
+    return allTags.map((tag: any) => ({
+      id: String(tag.id),
+      label: tag.name,
+    }));
+  }, [allTags]);
 
   const queryFromUrl = (searchParams.get('q') || '').trim();
 
@@ -223,7 +193,7 @@ export default function MyQuestionPage() {
             onSubmit={updateSearchQuery}
           />
           <TagsFilterSelect
-            tags={sampleTags}
+            tags={availableTags}
             selectedTags={selectedTags}
             onChange={setSelectedTags}
             placeholder="Choose your tech stack..."
@@ -274,10 +244,16 @@ export default function MyQuestionPage() {
                 )}
               </div>
             </ScrollArea>
-            <PaginationDemo />
           </div>
           <div className="lg:col-span-1">
-            <RecentQuestionsTimeline questions={timelineQuestions} />
+            {isRecentLoading ? (
+              <div className="text-sm text-gray-500">Loading activity...</div>
+            ) : (
+              <RecentQuestionsTimeline
+                questions={(recentActivity?.items || []).slice(0, 5)}
+                allQuestions={recentActivity?.items || []}
+              />
+            )}
           </div>
         </div>
       </div>

@@ -17,6 +17,7 @@ import {
   toggleQuestionBookmark,
   voteQuestion,
 } from '@/lib/api/questionApi';
+import { getTags } from '@/lib/api/authApi';
 import { CreateQuestionPayload, ModifyDescriptionPayload } from '@/types/question';
 import { queryClient } from './queryClient';
 
@@ -101,6 +102,13 @@ export const useBookmarksQuery = () => {
   return useQuery({
     queryKey: ['bookmarks'],
     queryFn: getBookmarks,
+  });
+};
+
+export const useTagsQuery = () => {
+  return useQuery({
+    queryKey: ['tags'],
+    queryFn: getTags,
   });
 };
 

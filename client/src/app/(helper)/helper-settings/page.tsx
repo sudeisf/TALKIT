@@ -1,17 +1,54 @@
 'use client';
 
-import { useState } from 'react';
-import { Settings, User, Bell, Globe } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Settings, User, Globe, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppearanceSettings from '@/components/learner/Apperance';
+import { getCurrentUser, updateCurrentUserProfile } from '@/lib/api/authApi';
+import { toast } from 'sonner';
 
 export default function SettingsPage() {
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [pushNotifications, setPushNotifications] = useState(true);
-  const [studyReminders, setStudyReminders] = useState(true);
+  const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    getCurrentUser()
+      .then((data) => {
+        setEmail(data?.email || '');
+      })
+      .catch((error) => {
+        console.error('Failed to fetch user:', error);
+        toast.error('Failed to load settings');
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, []);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await updateCurrentUserProfile({ email });
+      toast.success('Email updated successfully');
+    } catch (error: any) {
+      const message = error?.response?.data?.email?.[0] || 'Failed to update email';
+      toast.error(message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-red-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-6 max-w-4xl text-foreground">
@@ -42,69 +79,18 @@ export default function SettingsPage() {
                 <Input
                   id="email"
                   type="email"
-                  defaultValue="sudiesfed@gmail.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
             </div>
-            <Button variant={'outline'}>Save Changes</Button>
-          </CardContent>
-        </Card>
-
-        {/* Notification Settings */}
-        <Card className="shadow-none border-b border-x-0 border-t-0 rounded-none">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5 text-warning" />
-              Notification Preferences
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="text-sm font-medium">
-                  Email Notifications
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  Receive notifications via email
-                </p>
-              </div>
-              <input
-                type="checkbox"
-                checked={emailNotifications}
-                onChange={(e) => setEmailNotifications(e.target.checked)}
-                className="w-4 h-4 rounded"
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="text-sm font-medium">
-                  Push Notifications
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  Receive notifications on your device
-                </p>
-              </div>
-              <input
-                type="checkbox"
-                checked={pushNotifications}
-                onChange={(e) => setPushNotifications(e.target.checked)}
-                className="w-4 h-4 rounded"
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="text-sm font-medium">Study Reminders</Label>
-                <p className="text-xs text-muted-foreground">
-                  Daily reminders to study
-                </p>
-              </div>
-              <input
-                type="checkbox"
-                checked={studyReminders}
-                onChange={(e) => setStudyReminders(e.target.checked)}
-                className="w-4 h-4 rounded"
-              />
-            </div>
+            <Button 
+              variant={'outline'} 
+              onClick={handleSave}
+              disabled={isSaving}
+            >
+              {isSaving ? 'Saving...' : 'Save Changes'}
+            </Button>
           </CardContent>
         </Card>
 
@@ -115,12 +101,12 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Globe className="h-5 w-5 text-indigo-600" />
-              Study Preferences
+              Helper Preferences
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="daily-goal">Daily Study Goal</Label>
+              <Label htmlFor="daily-goal">Daily Goal</Label>
               <select className="w-full p-2 border border-input rounded-md bg-background text-foreground">
                 <option value="5">5 questions per day</option>
                 <option value="10">10 questions per day</option>
@@ -128,19 +114,6 @@ export default function SettingsPage() {
                 <option value="20">20 questions per day</option>
                 <option value="25">25 questions per day</option>
               </select>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="text-sm font-medium">Sound Effects</Label>
-                <p className="text-xs text-muted-foreground">
-                  Play sounds during study sessions
-                </p>
-              </div>
-              <input
-                type="checkbox"
-                defaultChecked
-                className="w-4 h-4 rounded"
-              />
             </div>
           </CardContent>
         </Card>

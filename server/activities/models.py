@@ -14,6 +14,7 @@ class UserActivity(models.Model):
         ('bookmark_added', 'Bookmark Added'),
         ('upvote_given', 'Upvote Given'),
         ('helper_joined', 'Helper Joined'),
+        ('session_closed', 'Session Closed'),
     ]
     
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='activities')

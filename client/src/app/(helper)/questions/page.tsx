@@ -3,7 +3,6 @@
 import { DateRangePicker } from '@/components/learner/date-range-picker';
 import { QuestionCard } from '@/components/learner/questionCards';
 import { QuestionCounterSorter } from '@/components/learner/questionCount';
-import { PaginationDemo } from '@/components/learner/QuestionsPaginations';
 import { RecentQuestionsTimeline } from '@/components/learner/RecentQuestionsTimeline';
 import { SelectedTagsDisplay } from '@/components/learner/selected-tag-display';
 import { Tag, TagsFilterSelect } from '@/components/learner/tags-filter-select';
@@ -13,6 +12,7 @@ import {
   useJoinQuestionMutation,
   useQuestionFeedQuery,
   useRecentActivityQuery,
+  useTagsQuery,
   useToggleBookmarkMutation,
   useVoteQuestionMutation,
 } from '@/query/questionMutation';
@@ -55,6 +55,8 @@ export default function QuestionsPage() {
   } = useQuestionFeedQuery();
   const { data: recentActivity, isLoading: isRecentLoading } =
     useRecentActivityQuery(100);
+  const { data: allTags = [] } = useTagsQuery();
+  
   const { mutateAsync: joinQuestion } = useJoinQuestionMutation();
   const { mutateAsync: voteQuestion } = useVoteQuestionMutation();
   const { mutateAsync: toggleBookmark } = useToggleBookmarkMutation();
@@ -118,15 +120,11 @@ export default function QuestionsPage() {
   }, [feed]);
 
   const availableTags = useMemo<Tag[]>(() => {
-    const tagSet = new Set<string>();
-    normalizedQuestions.forEach((question) => {
-      question.tags.forEach((tag) => tagSet.add(tag));
-    });
-
-    return Array.from(tagSet)
-      .sort((a, b) => a.localeCompare(b))
-      .map((label) => ({ id: label.toLowerCase(), label }));
-  }, [normalizedQuestions]);
+    return allTags.map((tag: any) => ({
+      id: String(tag.id),
+      label: tag.name,
+    }));
+  }, [allTags]);
 
   const filteredQuestions = useMemo(() => {
     const searched = normalizedQuestions.filter((question) => {
@@ -173,20 +171,9 @@ export default function QuestionsPage() {
     }
   }, [filteredQuestions, sortBy]);
 
-  const allTimelineQuestions = useMemo(() => {
-    return (recentActivity?.items || []).map((item) => ({
-      id: String(item.id),
-      title: item.title,
-      status: item.status === 'searching' ? 'ongoing' : item.status,
-      timeAgo: item.timeAgo,
-      answerCount: item.answerCount,
-      upvotes: item.upvotes,
-    }));
-  }, [recentActivity]);
-
   const timelineQuestions = useMemo(
-    () => allTimelineQuestions.slice(0, 3),
-    [allTimelineQuestions]
+    () => (recentActivity?.items || []).slice(0, 5),
+    [recentActivity]
   );
 
   const handleTitleClick = (id: string) => {
@@ -312,7 +299,6 @@ export default function QuestionsPage() {
                 )}
               </div>
             </ScrollArea>
-            <PaginationDemo />
           </div>
           <div>
             {isRecentLoading ? (
@@ -320,7 +306,7 @@ export default function QuestionsPage() {
             ) : (
               <RecentQuestionsTimeline
                 questions={timelineQuestions}
-                allQuestions={allTimelineQuestions}
+                allQuestions={recentActivity?.items || []}
               />
             )}
           </div>

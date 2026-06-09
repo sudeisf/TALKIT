@@ -2,7 +2,7 @@
 
 import { useAppSelector } from '@/redux/hooks';
 import { Plus, X } from 'lucide-react';
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 
@@ -74,18 +74,17 @@ export const SkillsInput: React.FC<SkillsInputProps> = ({ value, onChange }) => 
   };
 
   /** Handle clicks outside for blur */
-  const handleClickOutside = (e: MouseEvent) => {
+  const handleClickOutside = useCallback((e: MouseEvent) => {
     if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
       setIsFocused(false);
-      if (inputValue.trim()) addSkill(inputValue);
     }
-  };
+  }, []);
 
   // Attach / detach click outside listener
-  useState(() => {
+  useEffect(() => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  });
+  }, [handleClickOutside]);
 
   return (
     <div className="space-y-3" ref={containerRef}>

@@ -83,3 +83,10 @@ export const uploadCoverImage = async (file: File) => {
 export const logoutUser = async () => {
   await API.post('/users/auth/logout/');
 };
+
+export const getTags = async () => {
+  const response = await API.get('/users/tags/', {
+    withCredentials: true,
+  });
+  return response.data;
+};

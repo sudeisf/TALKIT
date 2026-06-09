@@ -96,17 +96,17 @@ export default function ProfilePage() {
           ))}
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-16">
           {/* Cover Image Section */}
-          <div className="relative h-[240px] rounded-xl overflow-hidden bg-muted">
+          <div className="relative h-[240px] rounded-xl bg-muted">
             {coverImage ? (
               <img
                 src={coverImage}
                 alt="Cover"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover rounded-xl"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-primary/10 via-muted to-background" />
+              <div className="w-full h-full bg-gradient-to-br from-primary/10 via-muted to-background rounded-xl" />
             )}
 
             {/* Upload Cover Button */}
@@ -114,16 +114,16 @@ export default function ProfilePage() {
               <UploadCoverImage onUploaded={setCoverImage} />
             </div>
 
-            {/* Profile Picture */}
-            <div className="absolute -bottom-16 left-6 z-20">
-              <div className="relative">
-                <Avatar className="w-[148px] h-[148px] border-[6px] border-background shadow-xl">
+            {/* Profile Picture - positioned to overlap bottom edge */}
+            <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 lg:left-6 lg:translate-x-0 z-20">
+              <div className="relative bg-background rounded-full p-1">
+                <Avatar className="w-[120px] h-[120px] lg:w-[148px] lg:h-[148px] border-4 border-background shadow-lg">
                   <AvatarImage src={profileImage || fallbackUserInfo.avatar} />
-                  <AvatarFallback className="text-5xl font-medium">
+                  <AvatarFallback className="text-4xl lg:text-5xl font-medium">
                     {displayName.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
-                <div className="absolute bottom-2 right-2">
+                <div className="absolute bottom-2 right-2 z-30">
                   <UploadProfileImage onUploaded={setProfileImage} />
                 </div>
               </div>
