@@ -87,7 +87,7 @@ export default function SessionBox() {
   const formatTime = (date: Date) => date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 
   const owner = sessionDetail?.asked_by;
-  const ownerName = owner ? `${owner.first_name || ''} ${owner.last_name || ''}`.trim() || owner.username : 'Session Owner';
+  const ownerName = owner ? (`${owner.first_name || ''} ${owner.last_name || ''}`.trim() || owner.username || 'Session Owner') : 'Session Owner';
 
   const onlineParticipants = participants.filter((p) => onlineUserIds.includes(p.id));
   const offlineParticipants = participants.filter((p) => !onlineUserIds.includes(p.id));

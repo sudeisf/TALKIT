@@ -316,7 +316,7 @@ const VoiceRecorder = forwardRef(function VoiceRecorder(
 
 type MessageInputProps = {
   onVoiceMessage?: (audioBlob: Blob) => void;
-  onSendMessage?: (payload: OutgoingChatMessage) => void;
+  onSendMessage?: (payload: OutgoingChatMessage, optimistic?: OptimisticMessage) => void;
   onSendText?: (text: string) => void;
 };
 
@@ -329,6 +329,15 @@ export type OutgoingChatMessage = {
   audio_base64?: string;
   file_base64?: string;
   file_name?: string;
+};
+
+export type OptimisticMessage = {
+  name: string;
+  type?: string;
+  text?: string;
+  fileUrl?: string;
+  fileName?: string;
+  audioUrl?: string;
 };
 
 const CODE_FENCE_REGEX = /```([\w#+.-]*)\n([\s\S]*?)```/m;
@@ -409,14 +418,24 @@ export function MessageInput({
       const base64Data = reader.result as string;
       const isImg = file.type.startsWith('image/');
       const msgType = isImg ? 'image' : 'document';
-      
-      onSendMessage?.({
-        type: 'message',
-        message: file.name,
-        message_type: msgType,
-        file_base64: base64Data,
-        file_name: file.name,
-      });
+
+      onSendMessage?.(
+        {
+          type: 'message',
+          message: file.name,
+          message_type: msgType,
+          file_base64: base64Data,
+          file_name: file.name,
+        },
+        // Optimistic preview — shown immediately while server saves
+        {
+          name: '',
+          type: msgType,
+          text: file.name,
+          fileUrl: base64Data,   // use local data URL as instant preview
+          fileName: file.name,
+        }
+      );
     };
     reader.readAsDataURL(file);
 
@@ -439,16 +458,29 @@ export function MessageInput({
   const handleVoiceRecordingComplete = (audioBlob: Blob) => {
     onVoiceMessage?.(audioBlob);
 
+    // Create a local object URL for immediate playback preview
+    const localAudioUrl = URL.createObjectURL(audioBlob);
+
     const reader = new FileReader();
     reader.onload = () => {
       const base64Data = reader.result as string;
-      onSendMessage?.({
-        type: 'message',
-        message: 'Voice message',
-        message_type: 'voice',
-        audio_base64: base64Data,
-        file_name: 'voice-message.webm',
-      });
+      onSendMessage?.(
+        {
+          type: 'message',
+          message: 'Voice message',
+          message_type: 'voice',
+          audio_base64: base64Data,
+          file_name: 'voice-message.webm',
+        },
+        // Optimistic preview — shown immediately while server saves
+        {
+          name: '',
+          type: 'voice',
+          text: 'Voice message',
+          audioUrl: localAudioUrl,
+          fileName: 'voice-message.webm',
+        }
+      );
     };
     reader.readAsDataURL(audioBlob);
 
