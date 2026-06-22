@@ -16,10 +16,19 @@ from urllib3 import request
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 import google.genai as genai
+from rest_framework import generics, permissions, status
 from .tasks import summarize_chat_session, vectorize_question
 from .serializers import (
 	ModifyQuestionDescriptionSerializer,
-...
+	ModifiedQuestionDescriptionResponseSerializer,
+	LearnerDashboardStatsSerializer,
+	MyQuestionListSerializer,
+	HelperDashboardStatsSerializer,
+	HelperSessionsChartSerializer,
+	HelperContributionsSerializer,
+	HelperProfileOverviewSerializer,
+	QuestionSerializer,
+)
 from activities.models import UserActivity
 
 class CloseSessionView(APIView):
@@ -49,15 +58,6 @@ class CloseSessionView(APIView):
             summarize_chat_session.delay(chat_session.id)
 
         return Response({"message": "Session closed and summary generation triggered."}, status=200)
-	ModifiedQuestionDescriptionResponseSerializer,
-	LearnerDashboardStatsSerializer,
-	MyQuestionListSerializer,
-	HelperDashboardStatsSerializer,
-	HelperSessionsChartSerializer,
-	HelperContributionsSerializer,
-	HelperProfileOverviewSerializer,
-	QuestionSerializer,
-)
 from rest_framework import generics, permissions, status
 
 from .models import Bookmark, Question, QuestionInvite, QuestionVote
