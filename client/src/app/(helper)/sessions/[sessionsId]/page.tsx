@@ -19,6 +19,18 @@ import { useMinimumLoading } from '@/hooks/use-minimum-loading';
 const STATUS_LABEL_ONLINE = 'ONLINE';
 const STATUS_LABEL_OFFLINE = 'OFFLINE';
 
+const normalizeFileUrl = (url?: string | null) => {
+  if (!url) return undefined;
+  if (/^https?:\/\//i.test(url)) return url;
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  try {
+    const parsed = new URL(apiUrl);
+    return `${parsed.origin}${url.startsWith('/') ? url : `/${url}`}`;
+  } catch {
+    return url;
+  }
+};
+
 export default function SessionBox() {
   const params = useParams<{ sessionsId: string }>();
   const sessionId = Number(params?.sessionsId || 0);
@@ -52,13 +64,15 @@ export default function SessionBox() {
       const mappedMessages: ChatMessage[] = sessionDetail.messages.map((m: any) => ({
         id: String(m.id),
         text: m.message_content,
-        type: m.message_type === 'code' ? 'code' : m.message_type === 'audio' ? 'voice' : 'text',
+        type: m.message_type || 'text',
         sender: m.is_mine ? 'user' : 'other',
         timestamp: new Date(m.created_at),
         name: `${m.sender.first_name} ${m.sender.last_name}`.trim() || m.sender.username,
         avatarUrl: m.sender.profile_image_url || undefined,
         codeSnippet: m.code_snippet,
-        audioUrl: m.file_url || undefined,
+        audioUrl: normalizeFileUrl(m.file_url || undefined),
+        fileUrl: normalizeFileUrl(m.file_url || undefined),
+        fileName: m.file_name || undefined,
       }));
       setMessages(mappedMessages);
     }
@@ -137,7 +151,43 @@ export default function SessionBox() {
             <div key={m.id} className={cn('flex gap-3', m.sender === 'user' ? 'ml-auto flex-row-reverse' : '')}>
               <Avatar className="h-8 w-8"><AvatarImage src={m.avatarUrl || undefined} /><AvatarFallback>{m.name.charAt(0)}</AvatarFallback></Avatar>
               <div className={cn('flex flex-col', m.sender === 'user' ? 'items-end' : 'items-start')}>
-                <div className={cn('px-4 py-2 rounded-lg text-sm', m.sender === 'user' ? 'bg-primary text-primary-foreground' : 'bg-card border')}>{m.text}</div>
+                {(!m.type || m.type === 'text') && (
+                  <div className={cn('px-4 py-2 rounded-lg text-sm', m.sender === 'user' ? 'bg-primary text-primary-foreground' : 'bg-card border')}>
+                    {m.text}
+                  </div>
+                )}
+                {m.type === 'code' && (
+                  <div className="rounded-lg overflow-hidden border border-border w-full max-w-full my-1">
+                    <SyntaxHighlighter
+                      language={m.codeLanguage || 'javascript'}
+                      style={oneDark}
+                      customStyle={{ margin: 0 }}
+                    >
+                      {m.codeSnippet || m.text || ''}
+                    </SyntaxHighlighter>
+                  </div>
+                )}
+                {(m.type === 'voice' || m.type === 'audio') && m.audioUrl && (
+                  <div className="flex items-center gap-2 bg-muted/30 rounded-lg p-2 border border-border mt-1">
+                    <audio src={m.audioUrl} controls className="h-10 max-w-xs" />
+                  </div>
+                )}
+                {m.type === 'image' && m.fileUrl && (
+                  <div className="rounded-lg overflow-hidden border border-border max-w-md my-1 shadow-sm hover:scale-[1.01] transition-transform duration-200">
+                    <img src={m.fileUrl} alt={m.fileName || 'Image'} className="w-full h-auto max-h-[300px] object-cover" />
+                  </div>
+                )}
+                {(m.type === 'document' || m.type === 'other') && m.fileUrl && (
+                  <div className="flex items-center gap-3 bg-white dark:bg-card rounded-xl p-3 border border-border mt-1 shadow-xs max-w-sm">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                      <BookOpen className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-foreground truncate">{m.fileName || m.text || 'Attached file'}</p>
+                      <a href={m.fileUrl} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">Download file</a>
+                    </div>
+                  </div>
+                )}
                 <span className="text-[10px] text-muted-foreground">{formatTime(m.timestamp)}</span>
               </div>
             </div>

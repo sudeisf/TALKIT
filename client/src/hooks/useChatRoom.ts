@@ -6,12 +6,14 @@ import { OutgoingChatMessage } from '@/components/helper/inputBox';
 export interface ChatMessage {
   id: string;
   text?: string;
-  type?: 'text' | 'voice' | 'code';
+  type?: 'text' | 'voice' | 'audio' | 'code' | 'image' | 'document' | 'other';
   sender: 'user' | 'other';
   timestamp: Date;
   name: string;
   avatarUrl?: string | null;
   audioUrl?: string;
+  fileUrl?: string;
+  fileName?: string;
   codeSnippet?: string;
   codeLanguage?: string;
 }
@@ -80,13 +82,15 @@ export const useChatRoom = (ticketId: string | null) => {
           {
             id: data.message_id?.toString() || Date.now().toString(),
             text: data.message,
-            type: data.message_type === 'code' ? 'code' : isVoice ? 'voice' : 'text',
+            type: data.message_type,
             sender: Number(data.sender_id) === Number(currentUserId) ? 'user' : 'other',
             timestamp: new Date(data.created_at || Date.now()),
             name: data.username || 'Unknown',
             avatarUrl: data.sender_avatar_url || undefined,
             codeSnippet: data.code_snippet,
             audioUrl: normalizeFileUrl(isVoice ? data.file_url : undefined),
+            fileUrl: normalizeFileUrl(data.file_url),
+            fileName: data.file_name || undefined,
           },
         ]);
       }
@@ -101,7 +105,7 @@ export const useChatRoom = (ticketId: string | null) => {
 
   const sendMessage = useCallback((payload: OutgoingChatMessage) => {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
-    if (!payload.message.trim() && !payload.code_snippet?.trim()) return;
+    if (!payload.message?.trim() && !payload.code_snippet?.trim() && !payload.audio_base64 && !payload.file_base64) return;
     wsRef.current.send(JSON.stringify(payload));
   }, []);
 

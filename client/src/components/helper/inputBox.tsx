@@ -323,9 +323,12 @@ type MessageInputProps = {
 export type OutgoingChatMessage = {
   type: 'message';
   message: string;
-  message_type: 'text' | 'code';
+  message_type: 'text' | 'code' | 'audio' | 'voice' | 'image' | 'link' | 'document' | 'other';
   code_snippet?: string;
   code_language?: string;
+  audio_base64?: string;
+  file_base64?: string;
+  file_name?: string;
 };
 
 const CODE_FENCE_REGEX = /```([\w#+.-]*)\n([\s\S]*?)```/m;
@@ -400,6 +403,26 @@ export function MessageInput({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64Data = reader.result as string;
+      const isImg = file.type.startsWith('image/');
+      const msgType = isImg ? 'image' : 'document';
+      
+      onSendMessage?.({
+        type: 'message',
+        message: file.name,
+        message_type: msgType,
+        file_base64: base64Data,
+        file_name: file.name,
+      });
+    };
+    reader.readAsDataURL(file);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleSendText = () => {
@@ -415,6 +438,20 @@ export function MessageInput({
 
   const handleVoiceRecordingComplete = (audioBlob: Blob) => {
     onVoiceMessage?.(audioBlob);
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64Data = reader.result as string;
+      onSendMessage?.({
+        type: 'message',
+        message: 'Voice message',
+        message_type: 'voice',
+        audio_base64: base64Data,
+        file_name: 'voice-message.webm',
+      });
+    };
+    reader.readAsDataURL(audioBlob);
+
     setIsRecording(false); // back to normal input UI
   };
 

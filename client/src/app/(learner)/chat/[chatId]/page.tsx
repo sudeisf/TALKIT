@@ -132,20 +132,20 @@ export default function ChatRoomPage() {
             const lastName = message.sender?.last_name || '';
             const fallbackName = message.sender?.username || 'User';
             const resolvedName = `${firstName} ${lastName}`.trim() || fallbackName;
-            const isCode = message.message_type === 'code';
-            const isVoice = message.message_type === 'audio' || message.message_type === 'voice';
 
             return {
               id: String(message.id),
-              text: isCode ? 'Code snippet' : message.message_content,
-              type: isCode ? 'code' : isVoice ? 'voice' : 'text',
+              text: message.message_content,
+              type: message.message_type || 'text',
               sender: message.is_mine ? 'user' : 'other',
               timestamp: new Date(message.created_at),
               name: resolvedName,
               avatarUrl: message.sender?.profile_image_url || undefined,
               codeSnippet: message.code_snippet || undefined,
-              codeLanguage: isCode ? detectLanguage(message.code_snippet) : undefined,
-              audioUrl: normalizeFileUrl(isVoice ? message.file_url || undefined : undefined),
+              codeLanguage: message.message_type === 'code' ? detectLanguage(message.code_snippet) : undefined,
+              audioUrl: normalizeFileUrl(message.file_url || undefined),
+              fileUrl: normalizeFileUrl(message.file_url || undefined),
+              fileName: message.file_name || undefined,
             };
           });
           setMessages(mappedMessages);
@@ -245,6 +245,38 @@ export default function ChatRoomPage() {
                         {msg.text ? renderLinkedText(msg.text) : null}
                       </p>
                     </div>
+                )}
+                {msg.type === 'code' && (
+                  <div className="rounded-lg overflow-hidden border border-border w-full max-w-full my-1">
+                    <SyntaxHighlighter
+                      language={msg.codeLanguage || 'javascript'}
+                      style={oneDark}
+                      customStyle={{ margin: 0 }}
+                    >
+                      {msg.codeSnippet || msg.text || ''}
+                    </SyntaxHighlighter>
+                  </div>
+                )}
+                {(msg.type === 'voice' || msg.type === 'audio') && msg.audioUrl && (
+                  <div className="flex items-center gap-2 bg-muted/30 rounded-lg p-2 border border-border mt-1">
+                    <audio src={msg.audioUrl} controls className="h-10 max-w-xs" />
+                  </div>
+                )}
+                {msg.type === 'image' && msg.fileUrl && (
+                  <div className="rounded-lg overflow-hidden border border-border max-w-md my-1 shadow-sm hover:scale-[1.01] transition-transform duration-200">
+                    <img src={msg.fileUrl} alt={msg.fileName || 'Image'} className="w-full h-auto max-h-[300px] object-cover" />
+                  </div>
+                )}
+                {(msg.type === 'document' || msg.type === 'other') && msg.fileUrl && (
+                  <div className="flex items-center gap-3 bg-white dark:bg-card rounded-xl p-3 border border-border mt-1 shadow-xs max-w-sm">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                      <BookOpen className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-foreground truncate">{msg.fileName || msg.text || 'Attached file'}</p>
+                      <a href={msg.fileUrl} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">Download file</a>
+                    </div>
+                  </div>
                 )}
                 <span className="text-[10px] text-muted-foreground px-1 mt-0.5">{formatTime(msg.timestamp)}</span>
               </div>

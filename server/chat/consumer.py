@@ -131,16 +131,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         code_snippet = payload.get('code_snippet')
         audio_base64 = payload.get('audio_base64')
+        file_base64 = payload.get('file_base64')
         file_name = payload.get('file_name')
 
         # Validation
         if message_type == 'code' and not code_snippet:
             await self.send(text_data=json.dumps({'type': 'error', 'message': 'code_snippet missing.'}))
             return
-        if message_type in {'audio', 'voice'} and not audio_base64:
+        if message_type in {'audio', 'voice'} and not audio_base64 and not file_base64:
             await self.send(text_data=json.dumps({'type': 'error', 'message': 'audio_base64 missing.'}))
             return
-        if message_type not in {'code', 'audio', 'voice'} and not message:
+        if message_type in {'image', 'document', 'other'} and not file_base64:
+            await self.send(text_data=json.dumps({'type': 'error', 'message': 'file_base64 missing.'}))
+            return
+        if message_type not in {'code', 'audio', 'voice', 'image', 'document', 'other'} and not message:
             await self.send(text_data=json.dumps({'type': 'error', 'message': 'Message cannot be empty.'}))
             return
 
@@ -151,6 +155,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             message_type=message_type,
             code_snippet=code_snippet,
             audio_base64=audio_base64,
+            file_base64=file_base64,
             file_name=file_name,
         )
 
@@ -282,7 +287,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         return list(session.users_online.values_list('id', flat=True))
 
     @database_sync_to_async
-    def _create_message(self, chat_session_id, sender_id, message, message_type, code_snippet, audio_base64, file_name):
+    def _create_message(self, chat_session_id, sender_id, message, message_type, code_snippet, audio_base64, file_base64, file_name):
         created_message = ChatMessage(
             chat_session_id=chat_session_id,
             sender_id=sender_id,
@@ -291,13 +296,27 @@ class ChatConsumer(AsyncWebsocketConsumer):
             code_snippet=code_snippet,
         )
 
-        if message_type in {'audio', 'voice'} and audio_base64:
-            decoded_audio = self._decode_base64_file(audio_base64)
-            if decoded_audio:
-                safe_name = file_name or f"voice-{uuid.uuid4().hex}.webm"
-                # FIX 3: Ensure we actually save the file field
-                created_message.file.save(safe_name, ContentFile(decoded_audio), save=True)
-                created_message.file_name = safe_name
+        base64_data = file_base64 or audio_base64
+        if base64_data:
+            decoded_file = self._decode_base64_file(base64_data)
+            if decoded_file:
+                if message_type in {'audio', 'voice'}:
+                    default_prefix = "voice"
+                    default_ext = ".webm"
+                elif message_type == 'image':
+                    default_prefix = "image"
+                    default_ext = ".png"
+                else:
+                    default_prefix = "file"
+                    default_ext = ".bin"
+
+                if file_name and '.' in file_name:
+                    safe_name = f"{uuid.uuid4().hex}_{file_name}"
+                else:
+                    safe_name = f"{default_prefix}-{uuid.uuid4().hex}{default_ext}"
+
+                created_message.file.save(safe_name, ContentFile(decoded_file), save=True)
+                created_message.file_name = file_name or safe_name
 
         created_message.save()
 
