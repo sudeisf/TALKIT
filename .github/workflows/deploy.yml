@@ -1,0 +1,38 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+
+  # Allow manual trigger from GitHub UI
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy TalkItLn
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_KEY }}
+          script_stop: true
+          script: |
+            set -e
+
+            cd ~/talkitln
+
+            echo "▸ Pulling latest code..."
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "▸ Building and starting containers..."
+            docker compose up -d --build --remove-orphans
+
+            echo "▸ Cleaning up old images..."
+            docker image prune -f
+
+            echo "✓ Deployment complete!"

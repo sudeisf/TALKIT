@@ -3,65 +3,125 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
+      args:
+        - BUILD_SECRET_KEY=build-only-dummy-key-not-for-production
     container_name: talkit-server
     ports:
       - "8000:8000"
+    env_file: .env
     environment:
-      - DEBUG=${DEBUG}
-      - SECRET_KEY=${SECRET_KEY}
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_NAME=talkit_db
-      - DB_USER=sudeis
-      - DB_PASSWORD=BMB8DB4L9RQ@s
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - REDIS_CACHE_URL=redis://redis:6379/1
+      - CHANNEL_REDIS_URL=redis://redis:6379/2
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_started
     volumes:
-      - ./server:/app
+      - media_data:/app/chat_files
+    restart: unless-stopped
+
+  celery_worker:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      args:
+        - BUILD_SECRET_KEY=build-only-dummy-key-not-for-production
+    container_name: talkit-celery-worker
+    command: celery -A config worker --loglevel=info --concurrency=2
+    env_file: .env
+    environment:
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - REDIS_CACHE_URL=redis://redis:6379/1
+      - CHANNEL_REDIS_URL=redis://redis:6379/2
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      django:
+        condition: service_started
+    volumes:
+      - media_data:/app/chat_files
+    restart: unless-stopped
+
+  celery_beat:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      args:
+        - BUILD_SECRET_KEY=build-only-dummy-key-not-for-production
+    container_name: talkit-celery-beat
+    command: celery -A config beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    env_file: .env
+    environment:
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - REDIS_CACHE_URL=redis://redis:6379/1
+      - CHANNEL_REDIS_URL=redis://redis:6379/2
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      django:
+        condition: service_started
+    restart: unless-stopped
 
   frontend:
     build:
       context: ./client
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+        - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+        - NEXT_PUBLIC_GITHUB_CLIENT_ID=${NEXT_PUBLIC_GITHUB_CLIENT_ID}
     container_name: talkit-client
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://django:8000
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
       - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
       - NEXT_PUBLIC_GITHUB_CLIENT_ID=${NEXT_PUBLIC_GITHUB_CLIENT_ID}
     depends_on:
       - django
+    restart: unless-stopped
 
-  
   postgres:
-    image: pgvector/pgvector:pg18
-    container_name: postgres_db
+    image: pgvector/pgvector:pg17
+    container_name: talkit-postgres
     environment:
-      POSTGRES_DB: talkit_db
-      POSTGRES_USER: sudeis
-      POSTGRES_PASSWORD: BMB8DB4L9RQ@s
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "5433:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./server/db/init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sudeis -d talkit_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 5s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   redis:
-    image: redis:latest
-    container_name : redis_server
+    image: redis:7-alpine
+    container_name: talkit-redis
     ports:
-      - "6379:6379"
-    restart: always
-    
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
 
 volumes:
   postgres_data:
+  redis_data:
+  media_data:

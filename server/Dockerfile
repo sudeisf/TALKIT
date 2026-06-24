@@ -15,8 +15,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# collectstatic at build time — uses a throwaway key so the real SECRET_KEY
+# is never baked into the image layer.
+ARG BUILD_SECRET_KEY=dummy-build-key
+RUN SECRET_KEY="${BUILD_SECRET_KEY}" python manage.py collectstatic --noinput
+
 # Expose port
 EXPOSE 8000
 
-# Run the development server
-CMD ["sh", "-c", "python manage.py migrate && exec daphne -b 0.0.0.0 -p 8000 config.asgi:application"]
+# Run migrations then start Daphne (ASGI server with WebSocket support)
+CMD ["sh", "-c", "python manage.py migrate --noinput && exec daphne -b 0.0.0.0 -p 8000 config.asgi:application"]
