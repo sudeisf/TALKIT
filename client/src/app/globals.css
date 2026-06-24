@@ -1,6 +1,5 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
-@plugin "tailwindcss-pattern";
 @import 'preline/variants.css';
 @source "../node_modules/preline/dist/*.js";
 
