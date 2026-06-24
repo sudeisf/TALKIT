@@ -13,7 +13,7 @@ export default function AuthLayoutContent({
   return (
     <>
       {pageType === 'Login' ? (
-        <div className="flex justify-between p-4">
+        <div className="flex flex-col sm:flex-row justify-between items-center p-4 gap-4 sm:gap-0">
           <Link href="/" aria-label="Go to home page">
             <Image
               src="/svg/logo.svg"
@@ -23,7 +23,7 @@ export default function AuthLayoutContent({
               className="dark:brightness-0 dark:invert"
             />
           </Link>
-          <div className="flex space-x-0.5 text-md text-muted-foreground">
+          <div className="flex items-center space-x-1 text-sm sm:text-md text-muted-foreground">
             <p className="font-sans">Don't have an account?</p>
             <Link href="/register" className="font-sans underline text-foreground">
               Sign up
@@ -31,7 +31,7 @@ export default function AuthLayoutContent({
           </div>
         </div>
       ) : (
-        <div className="flex justify-between p-4">
+        <div className="flex flex-col sm:flex-row justify-between items-center p-4 gap-4 sm:gap-0">
           <Link href="/" aria-label="Go to home page">
             <Image
               src="/svg/logo.svg"
@@ -41,7 +41,7 @@ export default function AuthLayoutContent({
               className="dark:brightness-0 dark:invert"
             />
           </Link>
-          <div className="flex space-x-0.5 text-md text-muted-foreground">
+          <div className="flex items-center space-x-1 text-sm sm:text-md text-muted-foreground">
             <p className="font-sans">Already have an account?</p>
             <Link href="/login" className="font-sans underline text-foreground">
               Sign in{' '}

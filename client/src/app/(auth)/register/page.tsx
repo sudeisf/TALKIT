@@ -101,13 +101,13 @@ export default function Register() {
           />
         </div>
       ) : (
-        <div className="  mx-auto mt-10">
+        <div className="mx-auto mt-6 sm:mt-10 px-4 sm:px-0">
           <div className="flex flex-col items-center">
-            <h1 className="font-sans font-medium text-2xl text-foreground text-shadow-2xs">
+            <h1 className="font-sans font-medium text-xl sm:text-2xl text-foreground text-center">
               Welcome to Talkit
             </h1>
-            <p className="font-sans text-muted-foreground text-md">
-              Please enter your details to sign up your details
+            <p className="font-sans text-muted-foreground text-sm sm:text-md text-center mt-1">
+              Please enter your details to sign up
             </p>
           </div>
           {globalError && (

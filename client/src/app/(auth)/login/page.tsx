@@ -75,12 +75,12 @@ export default function Login() {
           />
         </div>
       ) : (
-        <div className="mx-auto mt-20">
+        <div className="mx-auto mt-10 sm:mt-20 px-4 sm:px-0">
           <div className="flex flex-col items-center">
-            <h1 className="font-sans font-medium text-2xl text-foreground text-shadow-2xs">
+            <h1 className="font-sans font-medium text-xl sm:text-2xl text-foreground text-center">
               Welcome back to Talkit
             </h1>
-            <p className="font-sans text-muted-foreground text-md">
+            <p className="font-sans text-muted-foreground text-sm sm:text-md text-center mt-1">
               Please enter your details to sign in
             </p>
           </div>
