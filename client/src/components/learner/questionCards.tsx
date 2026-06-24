@@ -29,7 +29,7 @@ interface QuestionCardProps {
   status: 'searching' | 'ongoing' | 'answered' | 'closed';
   createdDate: string;
   lastActivity: string;
-  answerCount: number;
+  answerCount?: number;
   upvotes?: number;
   downvotes?: number;
   userVote?: 'up' | 'down' | null;
@@ -77,7 +77,7 @@ export function QuestionCard({
   status,
   createdDate,
   lastActivity,
-  answerCount,
+  answerCount = 0,
   upvotes = 0,
   downvotes = 0,
   userVote = null,
