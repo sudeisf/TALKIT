@@ -13,7 +13,7 @@ export default function AuthLayout({
 }>) {
   return (
     <div className="flex w-full min-h-screen bg-background text-foreground">
-      <div className="bg-gradient-to-tr flex flex-col justify-end-safe items-center from-black via-gray-800 to-primary w-[45%] rounded-lg m-2 p-4">
+      <div className="hidden md:flex flex-col justify-end-safe items-center bg-gradient-to-tr from-black via-gray-800 to-primary w-[45%] rounded-lg m-2 p-4">
         <div className="w-full max-w-md">
           <div className="mb-4 flex items-center gap-3">
             <Image
@@ -34,7 +34,7 @@ export default function AuthLayout({
           </p>
         </div>
       </div>
-      <div className="w-[55%] m-2 bg-card text-card-foreground border border-border rounded-md flex flex-col justify-between">
+      <div className="w-full md:w-[55%] m-2 bg-card text-card-foreground border border-border rounded-md flex flex-col justify-between">
         <div>{children}</div>
         <div className="flex justify-between py-2 px-4 font-sans font-medium text-md text-muted-foreground">
           <p>2025</p>
