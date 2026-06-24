@@ -34,6 +34,18 @@ export default function HelperProfilePage() {
   const { data: overview } = useHelperProfileOverviewQuery();
   const { data: recentActivity } = useRecentActivityQuery(10);
 
+  const userInfo = {
+    name: '',
+    bio: '',
+    role: '',
+    location: '',
+    avatar: '',
+    HelpedLearners: 0,
+    sessionsJoined: 0,
+    ongoingSessions: 0,
+    avargeResponseTime: 0,
+  };
+
   useEffect(() => {
     getCurrentUser()
       .then((data) => {
@@ -77,10 +89,10 @@ export default function HelperProfilePage() {
     userInfo.location;
   const displaySkills: string[] = Array.isArray(profile?.tags)
     ? profile.tags
-        .map((tag: any) =>
-          typeof tag === 'string' ? tag : (tag?.name as string | undefined)
-        )
-        .filter((name: string | undefined): name is string => Boolean(name))
+      .map((tag: any) =>
+        typeof tag === 'string' ? tag : (tag?.name as string | undefined)
+      )
+      .filter((name: string | undefined): name is string => Boolean(name))
     : [];
 
   return (
@@ -114,7 +126,7 @@ export default function HelperProfilePage() {
               <AvatarImage src={profileImage || userInfo.avatar} />
               <AvatarFallback>{displayName.charAt(0)}</AvatarFallback>
             </Avatar>
-           
+
             <UploadProfileImage onUploaded={setProfileImage} />
           </div>
 
