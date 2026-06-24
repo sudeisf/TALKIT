@@ -74,5 +74,8 @@
   },
   "allowScripts": {
     "sharp@0.33.5": true
+  },
+  "optionalDependencies": {
+    "@tailwindcss/oxide-linux-x64-gnu": "^4.3.1"
   }
 }
