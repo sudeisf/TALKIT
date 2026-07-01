@@ -60,9 +60,6 @@ export const uploadProfileImage = async (file: File) => {
 
   const response = await API.post('/users/auth/profile-image/', formData, {
     withCredentials: true,
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
   });
   return response.data;
 };
@@ -73,9 +70,6 @@ export const uploadCoverImage = async (file: File) => {
 
   const response = await API.post('/users/auth/cover-image/', formData, {
     withCredentials: true,
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
   });
   return response.data;
 };
