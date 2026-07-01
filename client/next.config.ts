@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   outputFileTracingRoot: path.join(__dirname),
   images: {
-    domains: ['images.unsplash.com'],
+    domains: ['images.unsplash.com', 'res.cloudinary.com'],
   },
 };
 
