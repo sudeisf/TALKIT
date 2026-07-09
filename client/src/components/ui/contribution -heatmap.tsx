@@ -154,7 +154,7 @@ export function ContributionHeatmap() {
       </div>
 
       <div className="w-full ">
-        <div className="flex w-fit mb-4 flex-row items-center gap-1 border border-border rounded-md p-1 md:sticky md:top-0 md:self-start">
+        <div className="flex flex-wrap max-w-full w-fit mb-4 flex-row items-center gap-1 border border-border rounded-md p-1 md:sticky md:top-0 md:self-start">
           {years.map((year) => (
             <button
               key={year}
